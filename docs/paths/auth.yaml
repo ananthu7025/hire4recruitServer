@@ -184,6 +184,32 @@ login:
                           example: "7d"
       '401':
         $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '402':
+        description: Payment required
+        content:
+          application/json:
+            schema:
+              $ref: '../components/index.yaml#/schemas/Error'
+            examples:
+              payment_pending:
+                summary: Payment verification required
+                value:
+                  error: "Payment required"
+                  message: "Payment verification required. Please complete your payment to access your account."
+              subscription_suspended:
+                summary: Subscription suspended
+                value:
+                  error: "Payment required"
+                  message: "Subscription is suspended. Please contact support or update your payment method."
+      '403':
+        description: Email verification required
+        content:
+          application/json:
+            schema:
+              $ref: '../components/index.yaml#/schemas/Error'
+            example:
+              error: "Email verification required"
+              message: "Email verification required. Please check your email and verify your account before logging in."
       '423':
         description: Account locked
         content:
@@ -589,6 +615,90 @@ subscription-plans:
       '500':
         $ref: '../components/index.yaml#/responses/InternalServerError'
 
+retry-payment:
+  post:
+    tags:
+      - Authentication
+    summary: Retry payment for pending subscription
+    description: Create new payment order for companies with pending payment status
+    operationId: retryPayment
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              email:
+                type: string
+                format: email
+                description: Email address of the user whose company needs payment
+                example: "admin@techsolutions.com"
+            required:
+              - email
+    responses:
+      '200':
+        description: New payment order created successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        company:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                            name:
+                              type: string
+                            subscription:
+                              type: object
+                              properties:
+                                plan:
+                                  type: string
+                                pricing:
+                                  $ref: '../components/index.yaml#/schemas/Pricing'
+                        payment:
+                          $ref: '../components/index.yaml#/schemas/PaymentOrder'
+                        subscriptionPlan:
+                          $ref: '../components/index.yaml#/schemas/SubscriptionPlan'
+      '400':
+        description: Payment not required or invalid request
+        content:
+          application/json:
+            schema:
+              $ref: '../components/index.yaml#/schemas/Error'
+            examples:
+              payment_not_required:
+                summary: Payment already completed
+                value:
+                  error: "Payment not required"
+                  message: "Payment has already been completed or subscription is not pending"
+      '404':
+        description: User or company not found
+        content:
+          application/json:
+            schema:
+              $ref: '../components/index.yaml#/schemas/Error'
+            examples:
+              user_not_found:
+                summary: User not found
+                value:
+                  error: "User not found"
+                  message: "No account found with this email address"
+              company_not_found:
+                summary: Company not found
+                value:
+                  error: "Company not found"
+                  message: "No company associated with this account"
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
 verify-payment:
   post:
     tags:
@@ -654,5 +764,63 @@ verify-payment:
               $ref: '../components/index.yaml#/schemas/Error'
       '404':
         $ref: '../components/index.yaml#/responses/NotFoundError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+verify-email:
+  get:
+    tags:
+      - Authentication
+    summary: Verify user email address
+    description: Verify user email address using user ID from verification link
+    operationId: verifyEmail
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        description: User ID to verify email for
+        schema:
+          type: string
+          pattern: '^[0-9a-fA-F]{24}$'
+          example: "507f1f77bcf86cd799439011"
+    responses:
+      '200':
+        description: Email verified successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    message:
+                      type: string
+                      example: "Email verified successfully"
+      '400':
+        description: Bad request - Invalid user ID format or email already verified
+        content:
+          application/json:
+            schema:
+              $ref: '../components/index.yaml#/schemas/Error'
+            examples:
+              invalid_user_id:
+                summary: Invalid user ID format
+                value:
+                  error: "Invalid request"
+                  message: "Invalid user ID format"
+              already_verified:
+                summary: Email already verified
+                value:
+                  error: "Email already verified"
+                  message: "Email is already verified"
+      '404':
+        description: User not found
+        content:
+          application/json:
+            schema:
+              $ref: '../components/index.yaml#/schemas/Error'
+            example:
+              error: "User not found"
+              message: "User not found"
       '500':
         $ref: '../components/index.yaml#/responses/InternalServerError'

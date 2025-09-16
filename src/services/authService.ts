@@ -2,8 +2,21 @@ import { AuthUtils } from '../utils/auth';
 import User, { IUser } from '../models/User';
 import Company, { ICompany } from '../models/Company';
 import { logger } from '../config/logger';
-import { v4 as uuidv4 } from 'uuid';
 import mongoose from 'mongoose';
+import nodemailer from 'nodemailer';
+import fs from 'fs';
+import path from 'path';
+
+interface EmailTransporter {
+  sendMail(mailOptions: any): Promise<any>;
+}
+
+interface PaymentVerificationData {
+  razorpayOrderId: string;
+  razorpayPaymentId: string;
+  razorpaySignature: string;
+  paymentDetails: any;
+}
 
 export interface RegisterCompanyData {
   companyName: string;
@@ -60,6 +73,50 @@ export interface InviteUserData {
 }
 
 export class AuthService {
+  private static emailTransporter: any = null;
+
+  private static getEmailTransporter() {
+    if (!this.emailTransporter) {
+      this.emailTransporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST || 'smtp.gmail.com',
+        port: parseInt(process.env.SMTP_PORT || '587'),
+        secure: false,
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS,
+        },
+      });
+    }
+    return this.emailTransporter;
+  }
+
+  private static async findUserWithCompany(email: string) {
+    return User.findOne({ email, isDeleted: false })
+      .populate('companyId', 'name domain subscription isActive')
+      .lean();
+  }
+
+  private static validateCompanySubscription(company: any): void {
+    if (!company.isActive) {
+      throw new Error('Company account is inactive');
+    }
+
+    const { subscription } = company;
+    const statusMessages = {
+      pending_payment: 'Payment verification required. Please complete your payment to access your account.',
+      suspended: 'Subscription is suspended. Please contact support or update your payment method.',
+      cancelled: 'Subscription is cancelled. Please contact support to reactivate your account.',
+      inactive: 'Subscription is inactive. Please contact support.',
+    };
+
+    if (statusMessages[subscription.status]) {
+      throw new Error(statusMessages[subscription.status]);
+    }
+
+    if (subscription.endDate && new Date(subscription.endDate) < new Date()) {
+      throw new Error('Subscription has expired. Please renew your subscription to continue.');
+    }
+  }
   // Register new company with admin user
   static async registerCompany(data: RegisterCompanyData): Promise<{ company: ICompany; user: IUser }> {
     const session = await mongoose.startSession();
@@ -67,19 +124,11 @@ export class AuthService {
     try {
       session.startTransaction();
 
-      // Check if company domain already exists (if provided)
-      if (data.domain) {
-        const existingCompanyByDomain = await Company.findOne({ domain: data.domain }).session(session);
-        if (existingCompanyByDomain) {
-          throw new Error('A company with this domain already exists');
-        }
-      }
+      // Validate domain uniqueness
+      await this.validateDomainUniqueness(data.domain, session);
 
-      // Check if admin email already exists
-      const existingUserByEmail = await User.findOne({ email: data.adminEmail }).session(session);
-      if (existingUserByEmail) {
-        throw new Error('A user with this email already exists');
-      }
+      // Validate email uniqueness
+      await this.validateEmailUniqueness(data.adminEmail, session);
 
       // Create company
       const companyData = {
@@ -148,8 +197,8 @@ export class AuthService {
         adminEmail: adminUser.email
       });
 
-      // TODO: Send email verification email
-      // await this.sendEmailVerification(adminUser);
+      // Send email verification email (don't fail registration if email fails)
+      this.sendVerificationEmailAsync(adminUser._id.toString(), adminUser.email, company.name);
 
       return { company, user: adminUser };
 
@@ -162,68 +211,44 @@ export class AuthService {
     }
   }
 
-  // User login
   static async login(email: string, password: string): Promise<LoginResult> {
     try {
-      // Find user with company data
-      const user = await User.findOne({ email, isDeleted: false })
-        .populate('companyId', 'name domain subscription isActive')
-        .lean();
+      const user = await this.findUserWithCompany(email);
 
       if (!user) {
         throw new Error('Invalid email or password');
       }
 
-      // Check if user is active
       if (!user.isActive) {
         throw new Error('Account is deactivated');
       }
 
-      // Check if company is active
-      const company = user.companyId as any;
-      if (!company || !company.isActive) {
-        throw new Error('Company account is inactive');
+      if (!user.isEmailVerified) {
+        throw new Error('Email verification required. Please check your email and verify your account before logging in.');
       }
 
-      // Check if user is locked out
+      const company = user.companyId as any;
+      if (!company) {
+        throw new Error('Company not found');
+      }
+
+      // Validate company subscription status
+      this.validateCompanySubscription(company);
+
+      // Check lockout and validate password
       const userDoc = user as IUser;
       if (AuthUtils.isUserLockedOut(userDoc)) {
         throw new Error('Account is temporarily locked due to failed login attempts');
       }
 
-      // Compare password
       const isValidPassword = await AuthUtils.comparePassword(password, user.password);
-
       if (!isValidPassword) {
-        // Handle failed login attempt
-        const userForUpdate = await User.findById(user._id);
-        if (userForUpdate) {
-          const lockoutInfo = AuthUtils.handleFailedLogin(userForUpdate);
-          await userForUpdate.save();
-
-          if (lockoutInfo.isLocked) {
-            throw new Error('Account has been locked due to too many failed login attempts');
-          } else {
-            throw new Error(`Invalid email or password. ${lockoutInfo.attemptsRemaining} attempts remaining`);
-          }
-        }
-        throw new Error('Invalid email or password');
+        return this.handleFailedLoginAttempt(user._id.toString());
       }
 
-      // Reset failed login attempts on successful login
-      const userForUpdate = await User.findById(user._id);
-      if (userForUpdate) {
-        AuthUtils.resetFailedLoginAttempts(userForUpdate);
-        await userForUpdate.save();
-      }
-
-      // Generate token
+      // Successful login - reset attempts and generate token
+      await this.handleSuccessfulLogin(user._id.toString());
       const token = AuthUtils.generateUserToken(user as IUser);
-
-      // Update last login in database
-      await User.findByIdAndUpdate(user._id, {
-        lastLogin: new Date()
-      });
 
       logger.info('User logged in successfully', {
         userId: user._id.toString(),
@@ -250,7 +275,6 @@ export class AuthService {
         },
         token
       };
-
     } catch (error) {
       logger.error('Login failed:', { email, error: (error as Error).message });
       throw error;
@@ -518,65 +542,183 @@ export class AuthService {
   }
 
   // Activate subscription after payment verification
-  static async activateSubscription(companyId: string, paymentData: any): Promise<{ company: ICompany; token: string }> {
-    try {
-      // Find company
-      const company = await Company.findById(companyId);
-      if (!company) {
-        throw new Error('Company not found');
-      }
+  static async activateSubscription(companyId: string, paymentData: PaymentVerificationData): Promise<{ company: ICompany; token: string }> {
+  try {
+    logger.info('Starting subscription activation', { companyId });
 
-      // Update subscription status and payment info
-      company.subscription.status = 'active';
-      company.subscription.paymentInfo = {
-        ...company.subscription.paymentInfo,
-        razorpayPaymentId: paymentData.razorpayPaymentId,
-        razorpaySignature: paymentData.razorpaySignature,
-        lastPaymentDate: new Date()
+    const company = await Company.findById(companyId);
+    if (!company) {
+      throw new Error('Company not found');
+    }
+
+    // Update subscription with payment data
+    this.updateCompanySubscription(company, paymentData);
+    await company.save();
+
+    // Generate token for admin user
+    const adminUser = await User.findOne({
+      companyId: company._id,
+      role: 'company_admin'
+    });
+
+    if (!adminUser) {
+      throw new Error('Admin user not found');
+    }
+
+    const token = AuthUtils.generateToken({
+      userId: adminUser._id.toString(),
+      companyId: company._id.toString(),
+      email: adminUser.email,
+      role: adminUser.role
+    });
+
+    logger.info('Subscription activated successfully', {
+      companyId: company._id.toString(),
+      plan: company.subscription.plan,
+      amount: company.subscription.pricing.amount,
+      paymentId: paymentData.razorpayPaymentId
+    });
+
+    return { company, token };
+  } catch (error) {
+    logger.error('Subscription activation failed:', { companyId, error });
+    throw error;
+  }
+}
+
+
+  static async sendVerificationEmail(userId: string, email: string, companyName: string): Promise<void> {
+    try {
+      const verificationLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/email-verification/${userId}`;
+
+      const transporter = this.getEmailTransporter();
+
+      const templatePath = path.join(__dirname, '../templates/email-verification.html');
+      const htmlTemplate = fs.readFileSync(templatePath, 'utf8');
+
+      const html = htmlTemplate
+        .replace(/{{verificationLink}}/g, verificationLink)
+        .replace(/{{companyName}}/g, companyName);
+
+      const mailOptions = {
+        from: process.env.SMTP_FROM || 'noreply@hire4recruit.com',
+        to: email,
+        subject: `Email Verification - ${companyName}`,
+        html: html,
+        text: `
+          Email Verification Required
+
+          Thank you for registering with hire4recruit. Please verify your email address by visiting:
+          ${verificationLink}
+
+          This link will expire in 24 hours.
+
+          If you didn't request this verification, please ignore this email.
+        `
       };
 
-      // Set subscription end date
-      const interval = company.subscription.pricing.interval;
-      const endDate = new Date();
-      if (interval === 'monthly') {
-        endDate.setMonth(endDate.getMonth() + 1);
-      } else {
-        endDate.setFullYear(endDate.getFullYear() + 1);
-      }
-      company.subscription.endDate = endDate;
-
-      await company.save();
-
-      // Find the admin user to generate token
-      const adminUser = await User.findOne({
-        companyId: company._id,
-        role: 'company_admin'
-      });
-
-      if (!adminUser) {
-        throw new Error('Admin user not found');
-      }
-
-      // Generate login token
-      const token = AuthUtils.generateToken({
-        userId: adminUser._id.toString(),
-        companyId: company._id.toString(),
-        email: adminUser.email,
-        role: adminUser.role
-      });
-
-      logger.info('Subscription activated successfully', {
-        companyId: company._id.toString(),
-        plan: company.subscription.plan,
-        amount: company.subscription.pricing.amount,
-        paymentId: paymentData.razorpayPaymentId
-      });
-
-      return { company, token };
+      await transporter.sendMail(mailOptions);
+      logger.info('Verification email sent successfully', { userId, email });
 
     } catch (error) {
-      logger.error('Subscription activation failed:', { companyId, error });
+      logger.error('Failed to send verification email:', { userId, email, error });
+      throw new Error('Failed to send verification email');
+    }
+  }
+
+  static async verifyEmail(userId: string): Promise<void> {
+    try {
+      const user = await User.findById(userId);
+
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      if (user.isEmailVerified) {
+        throw new Error('Email is already verified');
+      }
+
+      user.isEmailVerified = true;
+      await user.save();
+
+      logger.info('Email verified successfully', { userId, email: user.email });
+
+    } catch (error) {
+      logger.error('Email verification failed:', { userId, error });
       throw error;
     }
+  }
+
+  private static async validateDomainUniqueness(domain: string | undefined, session: mongoose.ClientSession): Promise<void> {
+    if (domain) {
+      const existingCompany = await Company.findOne({ domain }).session(session);
+      if (existingCompany) {
+        throw new Error('A company with this domain already exists');
+      }
+    }
+  }
+
+  private static async validateEmailUniqueness(email: string, session: mongoose.ClientSession): Promise<void> {
+    const existingUser = await User.findOne({ email }).session(session);
+    if (existingUser) {
+      throw new Error('A user with this email already exists');
+    }
+  }
+
+  private static async sendVerificationEmailAsync(userId: string, email: string, companyName: string): Promise<void> {
+    try {
+      await this.sendVerificationEmail(userId, email, companyName);
+      logger.info('Verification email sent', { userId, email });
+    } catch (emailError) {
+      logger.warn('Failed to send verification email, but registration completed', {
+        userId,
+        email,
+        error: emailError
+      });
+    }
+  }
+
+  private static async handleFailedLoginAttempt(userId: string): Promise<never> {
+    const userForUpdate = await User.findById(userId);
+    if (userForUpdate) {
+      const lockoutInfo = AuthUtils.handleFailedLogin(userForUpdate);
+      await userForUpdate.save();
+
+      if (lockoutInfo.isLocked) {
+        throw new Error('Account has been locked due to too many failed login attempts');
+      } else {
+        throw new Error(`Invalid email or password. ${lockoutInfo.attemptsRemaining} attempts remaining`);
+      }
+    }
+    throw new Error('Invalid email or password');
+  }
+
+  private static async handleSuccessfulLogin(userId: string): Promise<void> {
+    const userForUpdate = await User.findById(userId);
+    if (userForUpdate) {
+      AuthUtils.resetFailedLoginAttempts(userForUpdate);
+      await userForUpdate.save();
+    }
+
+    await User.findByIdAndUpdate(userId, { lastLogin: new Date() });
+  }
+
+  private static updateCompanySubscription(company: ICompany, paymentData: PaymentVerificationData): void {
+    company.subscription.status = 'active';
+    company.subscription.paymentInfo = {
+      ...company.subscription.paymentInfo,
+      razorpayPaymentId: paymentData.razorpayPaymentId,
+      razorpaySignature: paymentData.razorpaySignature,
+      lastPaymentDate: new Date()
+    };
+
+    const interval = company.subscription.pricing.interval;
+    const endDate = new Date();
+    if (interval === 'monthly') {
+      endDate.setMonth(endDate.getMonth() + 1);
+    } else {
+      endDate.setFullYear(endDate.getFullYear() + 1);
+    }
+    company.subscription.endDate = endDate;
   }
 }

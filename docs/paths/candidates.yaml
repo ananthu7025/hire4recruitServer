@@ -1,5 +1,3 @@
-# Candidates endpoints placeholder
-
 candidates:
   get:
     tags:
@@ -12,12 +10,52 @@ candidates:
     parameters:
       - $ref: '../components/index.yaml#/parameters/PageParam'
       - $ref: '../components/index.yaml#/parameters/LimitParam'
+      - name: search
+        in: query
+        description: Search term for candidate name or email
+        schema:
+          type: string
+      - name: skills
+        in: query
+        description: Filter by skills (comma-separated)
+        schema:
+          type: string
+          example: "javascript,react,nodejs"
+      - name: experience
+        in: query
+        description: Filter by years of experience
+        schema:
+          type: string
+      - name: location
+        in: query
+        description: Filter by location
+        schema:
+          type: string
+      - name: jobId
+        in: query
+        description: Filter by specific job ID
+        schema:
+          type: string
+          format: objectId
       - name: status
         in: query
-        description: Candidate status filter
+        description: Filter by application status
         schema:
           type: string
           enum: [new, screening, interview_scheduled, interviewed, offer_made, hired, rejected]
+      - name: sortBy
+        in: query
+        description: Field to sort by
+        schema:
+          type: string
+          enum: [firstName, lastName, email, createdAt, updatedAt, experience]
+      - name: sortOrder
+        in: query
+        description: Sort order
+        schema:
+          type: string
+          enum: [asc, desc]
+          default: desc
     responses:
       '200':
         description: Candidates retrieved successfully
@@ -46,7 +84,7 @@ candidates:
     tags:
       - Candidates
     summary: Create candidate
-    description: Create a new candidate with optional resume upload
+    description: Create a new candidate with resume upload
     operationId: createCandidate
     security:
       - BearerAuth: []
@@ -59,30 +97,59 @@ candidates:
             properties:
               firstName:
                 type: string
+                description: Candidate's first name
+                maxLength: 50
               lastName:
                 type: string
+                description: Candidate's last name
+                maxLength: 50
               email:
                 type: string
                 format: email
+                description: Candidate's email address
               phone:
                 type: string
+                description: Candidate's phone number
               location:
                 type: string
-              skills:
+                description: Candidate's location
+              nationality:
                 type: string
-                description: JSON array of skills
+                description: Candidate's nationality
               experience:
-                type: integer
-              availability:
                 type: string
-                enum: [available, not_available, available_soon]
+                description: Years of experience or experience description
+              currentPosition:
+                type: string
+                description: Current job title/position
+              currentCompany:
+                type: string
+                description: Current company name
+              expectedSalary:
+                type: object
+                properties:
+                  min:
+                    type: number
+                    description: Minimum expected salary
+                  max:
+                    type: number
+                    description: Maximum expected salary
+                  currency:
+                    type: string
+                    default: USD
+                    description: Currency for salary expectations
+              preferences:
+                type: object
+                description: Candidate preferences and additional information
               resume:
                 type: string
                 format: binary
+                description: Resume file (PDF, DOC, DOCX)
             required:
               - firstName
               - lastName
               - email
+              - resume
     responses:
       '201':
         description: Candidate created successfully
@@ -94,12 +161,810 @@ candidates:
                 - type: object
                   properties:
                     data:
-                      $ref: '../components/index.yaml#/schemas/Candidate'
-      '401':
-        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+                      type: object
+                      properties:
+                        candidate:
+                          $ref: '../components/index.yaml#/schemas/Candidate'
       '400':
         $ref: '../components/index.yaml#/responses/ValidationError'
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '409':
+        description: Candidate already exists
+        content:
+          application/json:
+            schema:
+              $ref: '../components/index.yaml#/schemas/Error'
+            example:
+              error: "Candidate already exists"
+              message: "Candidate with this email already exists"
       '500':
         $ref: '../components/index.yaml#/responses/InternalServerError'
 
-# Additional endpoints would be defined here for other candidate operations
+talent-pool:
+  get:
+    tags:
+      - Candidates
+    summary: Get talent pool
+    description: Get candidates available in the talent pool with filtering
+    operationId: getTalentPool
+    security:
+      - BearerAuth: []
+    parameters:
+      - $ref: '../components/index.yaml#/parameters/PageParam'
+      - $ref: '../components/index.yaml#/parameters/LimitParam'
+      - name: skills
+        in: query
+        description: Filter by skills (comma-separated)
+        schema:
+          type: string
+      - name: experience
+        in: query
+        description: Filter by years of experience
+        schema:
+          type: string
+      - name: location
+        in: query
+        description: Filter by location
+        schema:
+          type: string
+      - name: sortBy
+        in: query
+        description: Field to sort by
+        schema:
+          type: string
+          enum: [firstName, lastName, createdAt, experience]
+      - name: sortOrder
+        in: query
+        description: Sort order
+        schema:
+          type: string
+          enum: [asc, desc]
+          default: desc
+    responses:
+      '200':
+        description: Talent pool retrieved successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        candidates:
+                          type: array
+                          items:
+                            $ref: '../components/index.yaml#/schemas/Candidate'
+                        pagination:
+                          type: object
+                          properties:
+                            currentPage:
+                              type: integer
+                            totalPages:
+                              type: integer
+                            totalItems:
+                              type: integer
+                            itemsPerPage:
+                              type: integer
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+search:
+  post:
+    tags:
+      - Candidates
+    summary: Search candidates with AI
+    description: Search and match candidates against a specific job using AI
+    operationId: searchCandidates
+    security:
+      - BearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              jobId:
+                type: string
+                format: objectId
+                description: Job ID to match candidates against
+              limit:
+                type: integer
+                minimum: 1
+                maximum: 100
+                default: 20
+                description: Maximum number of candidates to return
+            required:
+              - jobId
+    responses:
+      '200':
+        description: Candidates matched successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        candidates:
+                          type: array
+                          items:
+                            $ref: '../components/index.yaml#/schemas/Candidate'
+                        totalResults:
+                          type: integer
+                          description: Total number of matched candidates
+      '400':
+        $ref: '../components/index.yaml#/responses/ValidationError'
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '404':
+        description: Job not found
+        content:
+          application/json:
+            schema:
+              $ref: '../components/index.yaml#/schemas/Error'
+            example:
+              error: "Job not found"
+              message: "The specified job does not exist"
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+candidate-by-id:
+  get:
+    tags:
+      - Candidates
+    summary: Get candidate by ID
+    description: Get detailed information about a specific candidate
+    operationId: getCandidateById
+    security:
+      - BearerAuth: []
+    parameters:
+      - $ref: '../components/index.yaml#/parameters/CandidateIdParam'
+    responses:
+      '200':
+        description: Candidate retrieved successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        candidate:
+                          $ref: '../components/index.yaml#/schemas/Candidate'
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '404':
+        $ref: '../components/index.yaml#/responses/NotFoundError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+  put:
+    tags:
+      - Candidates
+    summary: Update candidate
+    description: Update candidate information
+    operationId: updateCandidate
+    security:
+      - BearerAuth: []
+    parameters:
+      - $ref: '../components/index.yaml#/parameters/CandidateIdParam'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              personalInfo:
+                type: object
+                properties:
+                  firstName:
+                    type: string
+                    maxLength: 50
+                  lastName:
+                    type: string
+                    maxLength: 50
+                  email:
+                    type: string
+                    format: email
+                  phone:
+                    type: string
+                  location:
+                    type: string
+                  nationality:
+                    type: string
+              experience:
+                type: string
+              currentPosition:
+                type: string
+              currentCompany:
+                type: string
+              expectedSalary:
+                type: object
+                properties:
+                  min:
+                    type: number
+                  max:
+                    type: number
+                  currency:
+                    type: string
+              skills:
+                type: array
+                items:
+                  type: string
+              availability:
+                type: string
+                enum: [available, not_available, available_soon]
+              notes:
+                type: string
+              tags:
+                type: array
+                items:
+                  type: string
+    responses:
+      '200':
+        description: Candidate updated successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        candidate:
+                          $ref: '../components/index.yaml#/schemas/Candidate'
+      '400':
+        $ref: '../components/index.yaml#/responses/ValidationError'
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '404':
+        $ref: '../components/index.yaml#/responses/NotFoundError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+  delete:
+    tags:
+      - Candidates
+    summary: Delete candidate
+    description: Soft delete a candidate (mark as deleted)
+    operationId: deleteCandidate
+    security:
+      - BearerAuth: []
+    parameters:
+      - $ref: '../components/index.yaml#/parameters/CandidateIdParam'
+    responses:
+      '200':
+        description: Candidate deletion request received
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    note:
+                      type: string
+                      example: "Full deletion implementation pending"
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '404':
+        $ref: '../components/index.yaml#/responses/NotFoundError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+update-status:
+  put:
+    tags:
+      - Candidates
+    summary: Update candidate application status
+    description: Update the status of a candidate's application for a specific job
+    operationId: updateCandidateStatus
+    security:
+      - BearerAuth: []
+    parameters:
+      - $ref: '../components/index.yaml#/parameters/CandidateIdParam'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              applicationId:
+                type: string
+                format: objectId
+                description: Application ID to update
+              status:
+                type: string
+                enum: [applied, screening, interview_scheduled, interviewed, offer_made, hired, rejected, withdrawn]
+                description: New application status
+              reason:
+                type: string
+                description: Reason for status change
+              notes:
+                type: string
+                description: Additional notes about the status change
+            required:
+              - applicationId
+              - status
+    responses:
+      '200':
+        description: Candidate status updated successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        candidate:
+                          $ref: '../components/index.yaml#/schemas/Candidate'
+      '400':
+        $ref: '../components/index.yaml#/responses/ValidationError'
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '404':
+        description: Candidate or application not found
+        content:
+          application/json:
+            schema:
+              $ref: '../components/index.yaml#/schemas/Error'
+            example:
+              error: "Not found"
+              message: "Candidate or application not found"
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+upload-resume:
+  post:
+    tags:
+      - Candidates
+    summary: Upload candidate resume
+    description: Upload or update a candidate's resume
+    operationId: uploadResume
+    security:
+      - BearerAuth: []
+    parameters:
+      - $ref: '../components/index.yaml#/parameters/CandidateIdParam'
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            properties:
+              resume:
+                type: string
+                format: binary
+                description: Resume file (PDF, DOC, DOCX)
+            required:
+              - resume
+    responses:
+      '200':
+        description: Resume uploaded successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        resumeUrl:
+                          type: string
+                          description: URL to the uploaded resume
+                        candidateId:
+                          type: string
+                          format: objectId
+                        note:
+                          type: string
+                          example: "Resume processing integration pending"
+      '400':
+        description: Resume file required
+        content:
+          application/json:
+            schema:
+              $ref: '../components/index.yaml#/schemas/Error'
+            example:
+              error: "Resume file required"
+              message: "Please upload a resume file"
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '404':
+        $ref: '../components/index.yaml#/responses/NotFoundError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+summary:
+  get:
+    tags:
+      - Candidates
+    summary: Get candidate summary
+    description: Get comprehensive summary of candidate including analytics and application history
+    operationId: getCandidateSummary
+    security:
+      - BearerAuth: []
+    parameters:
+      - $ref: '../components/index.yaml#/parameters/CandidateIdParam'
+    responses:
+      '200':
+        description: Candidate summary retrieved successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        summary:
+                          type: object
+                          properties:
+                            candidate:
+                              $ref: '../components/index.yaml#/schemas/Candidate'
+                            analytics:
+                              type: object
+                              description: Candidate analytics data
+                            applicationHistory:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  jobId:
+                                    type: string
+                                    format: objectId
+                                  status:
+                                    type: string
+                                  appliedAt:
+                                    type: string
+                                    format: date-time
+                                  updatedAt:
+                                    type: string
+                                    format: date-time
+                            totalApplications:
+                              type: integer
+                              description: Total number of applications
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '404':
+        $ref: '../components/index.yaml#/responses/NotFoundError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+applications:
+  get:
+    tags:
+      - Candidates
+    summary: Get candidate applications
+    description: Get all applications for a specific candidate with pagination
+    operationId: getCandidateApplications
+    security:
+      - BearerAuth: []
+    parameters:
+      - $ref: '../components/index.yaml#/parameters/CandidateIdParam'
+      - $ref: '../components/index.yaml#/parameters/PageParam'
+      - $ref: '../components/index.yaml#/parameters/LimitParam'
+      - name: status
+        in: query
+        description: Filter by application status
+        schema:
+          type: string
+          enum: [applied, screening, interview_scheduled, interviewed, offer_made, hired, rejected, withdrawn]
+      - name: sortBy
+        in: query
+        description: Field to sort by
+        schema:
+          type: string
+          enum: [appliedAt, updatedAt, status]
+          default: appliedAt
+      - name: sortOrder
+        in: query
+        description: Sort order
+        schema:
+          type: string
+          enum: [asc, desc]
+          default: desc
+    responses:
+      '200':
+        description: Candidate applications retrieved successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        applications:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              _id:
+                                type: string
+                                format: objectId
+                              jobId:
+                                type: string
+                                format: objectId
+                              status:
+                                type: string
+                              appliedAt:
+                                type: string
+                                format: date-time
+                              updatedAt:
+                                type: string
+                                format: date-time
+                              notes:
+                                type: string
+                              reason:
+                                type: string
+                        pagination:
+                          type: object
+                          properties:
+                            currentPage:
+                              type: integer
+                            totalPages:
+                              type: integer
+                            totalItems:
+                              type: integer
+                            itemsPerPage:
+                              type: integer
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '404':
+        $ref: '../components/index.yaml#/responses/NotFoundError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+update-application:
+  put:
+    tags:
+      - Candidates
+    summary: Update candidate application
+    description: Update a specific application of a candidate
+    operationId: updateCandidateApplication
+    security:
+      - BearerAuth: []
+    parameters:
+      - $ref: '../components/index.yaml#/parameters/CandidateIdParam'
+      - name: applicationId
+        in: path
+        required: true
+        description: Application ID
+        schema:
+          type: string
+          format: objectId
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                enum: [applied, screening, interview_scheduled, interviewed, offer_made, hired, rejected, withdrawn]
+                description: New application status
+              notes:
+                type: string
+                description: Additional notes
+              reason:
+                type: string
+                description: Reason for the update
+    responses:
+      '200':
+        description: Application updated successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        candidate:
+                          $ref: '../components/index.yaml#/schemas/Candidate'
+      '400':
+        $ref: '../components/index.yaml#/responses/ValidationError'
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '404':
+        description: Candidate or application not found
+        content:
+          application/json:
+            schema:
+              $ref: '../components/index.yaml#/schemas/Error'
+            example:
+              error: "Not found"
+              message: "Candidate or application not found"
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+analytics:
+  get:
+    tags:
+      - Candidates
+    summary: Get candidate analytics
+    description: Get analytics and performance metrics for a specific candidate
+    operationId: getCandidateAnalytics
+    security:
+      - BearerAuth: []
+    parameters:
+      - $ref: '../components/index.yaml#/parameters/CandidateIdParam'
+    responses:
+      '200':
+        description: Candidate analytics retrieved successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        analytics:
+                          type: object
+                          properties:
+                            totalApplications:
+                              type: integer
+                              description: Total number of applications
+                            activeApplications:
+                              type: integer
+                              description: Number of active applications
+                            interviewsScheduled:
+                              type: integer
+                              description: Number of interviews scheduled
+                            offersMade:
+                              type: integer
+                              description: Number of offers made
+                            averageResponseTime:
+                              type: number
+                              description: Average response time in days
+                            statusBreakdown:
+                              type: object
+                              properties:
+                                applied:
+                                  type: integer
+                                screening:
+                                  type: integer
+                                interview_scheduled:
+                                  type: integer
+                                interviewed:
+                                  type: integer
+                                offer_made:
+                                  type: integer
+                                hired:
+                                  type: integer
+                                rejected:
+                                  type: integer
+                            skillsMatch:
+                              type: object
+                              description: Skills matching statistics
+                            experienceLevel:
+                              type: string
+                              description: Candidate experience level assessment
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '404':
+        $ref: '../components/index.yaml#/responses/NotFoundError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+apply-to-job:
+  post:
+    tags:
+      - Candidates
+    summary: Apply candidate to job
+    description: Submit an application for a candidate to a specific job
+    operationId: applyToJob
+    security:
+      - BearerAuth: []
+    parameters:
+      - $ref: '../components/index.yaml#/parameters/CandidateIdParam'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              jobId:
+                type: string
+                format: objectId
+                description: Job ID to apply to
+              coverLetter:
+                type: string
+                description: Cover letter for the application
+              expectedSalary:
+                type: object
+                properties:
+                  min:
+                    type: number
+                  max:
+                    type: number
+                  currency:
+                    type: string
+                    default: USD
+              availableStartDate:
+                type: string
+                format: date
+                description: When the candidate can start
+              additionalInfo:
+                type: object
+                description: Additional application information
+            required:
+              - jobId
+    responses:
+      '200':
+        description: Application submitted successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        candidate:
+                          $ref: '../components/index.yaml#/schemas/Candidate'
+      '400':
+        $ref: '../components/index.yaml#/responses/ValidationError'
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '404':
+        description: Candidate or job not found
+        content:
+          application/json:
+            schema:
+              $ref: '../components/index.yaml#/schemas/Error'
+            examples:
+              candidate_not_found:
+                value:
+                  error: "Candidate not found"
+                  message: "Candidate not found"
+              job_not_found:
+                value:
+                  error: "Job not found"
+                  message: "Job not found or not active"
+      '409':
+        description: Duplicate application
+        content:
+          application/json:
+            schema:
+              $ref: '../components/index.yaml#/schemas/Error'
+            example:
+              error: "Duplicate application"
+              message: "Candidate has already applied to this job"
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'

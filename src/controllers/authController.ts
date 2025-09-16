@@ -2,10 +2,67 @@ import { Request, Response, NextFunction } from 'express';
 import { AuthService } from '../services/authService';
 import { PaymentService } from '../services/paymentService';
 import { logger } from '../config/logger';
+import User from '../models/User';
+import Company from '../models/Company';
+
+interface AuthRequest extends Request {
+  user?: {
+    userId: string;
+    email: string;
+    role: string;
+    companyId: string;
+    userData?: any;
+    permissions?: any;
+  };
+}
 
 export class AuthController {
+  private static handleError(res: Response, error: unknown, operation: string, defaultMessage: string) {
+    logger.error(`${operation} error:`, error);
+
+    if (error instanceof Error) {
+      const { message } = error;
+
+      // Authentication errors
+      if (message.includes('Invalid email or password') || message.includes('attempts remaining')) {
+        return res.status(401).json({ error: 'Authentication failed', message });
+      }
+
+      // Account status errors
+      if (message.includes('locked') || message.includes('inactive')) {
+        return res.status(423).json({ error: 'Account locked', message });
+      }
+
+      // Verification errors
+      if (message.includes('Email verification required')) {
+        return res.status(403).json({ error: 'Email verification required', message });
+      }
+
+      // Payment errors
+      if (message.includes('Payment verification required') || message.includes('Subscription is suspended')) {
+        return res.status(402).json({ error: 'Payment required', message });
+      }
+
+      // Validation errors
+      if (message.includes('Password validation') || message.includes('Current password is incorrect')) {
+        return res.status(400).json({ error: 'Validation failed', message });
+      }
+
+      // Conflict errors
+      if (message.includes('already exists')) {
+        return res.status(409).json({ error: 'Conflict', message });
+      }
+
+      // Not found errors
+      if (message.includes('not found') || message.includes('Invalid or expired')) {
+        return res.status(404).json({ error: 'Not found', message });
+      }
+    }
+
+    return res.status(500).json({ error: operation, message: defaultMessage });
+  }
   // Register new company
-  static async registerCompany(req: Request, res: Response, next: NextFunction): Promise<void> {
+  static async registerCompany(req: Request, res: Response): Promise<void> {
     try {
       const {
         companyName,
@@ -33,8 +90,6 @@ export class AuthController {
 
       let paymentOrder;
 
-      // Check if Razorpay is configured
-     
         // Create actual Razorpay order
         paymentOrder = await PaymentService.createOrder({
           amount,
@@ -100,29 +155,14 @@ export class AuthController {
       });
 
     } catch (error) {
-      logger.error('Company registration error:', error);
-
-      if (error instanceof Error) {
-        if (error.message.includes('already exists')) {
-          res.status(409).json({
-            error: 'Registration failed',
-            message: error.message
-          });
-          return;
-        }
-      }
-
-      res.status(500).json({
-        error: 'Registration failed',
-        message: 'An error occurred during company registration'
-      });
+      this.handleError(res, error, 'Registration failed', 'An error occurred during company registration');
     }
   }
 
   // User login
-  static async login(req: Request, res: Response, next: NextFunction): Promise<void> {
+  static async login(req: Request, res: Response): Promise<void> {
     try {
-      const { email, password, rememberMe } = req.body;
+      const { email, password } = req.body;
 
       const result = await AuthService.login(email, password);
 
@@ -139,37 +179,13 @@ export class AuthController {
       });
 
     } catch (error) {
-      logger.error('Login error:', error);
-
-      if (error instanceof Error) {
-        if (error.message.includes('Invalid email or password') ||
-            error.message.includes('attempts remaining')) {
-          res.status(401).json({
-            error: 'Authentication failed',
-            message: error.message
-          });
-          return;
-        }
-
-        if (error.message.includes('locked') || error.message.includes('inactive')) {
-          res.status(423).json({
-            error: 'Account locked',
-            message: error.message
-          });
-          return;
-        }
-      }
-
-      res.status(500).json({
-        error: 'Login failed',
-        message: 'An error occurred during login'
-      });
+      this.handleError(res, error, 'Login failed', 'An error occurred during login');
     }
   }
 
 
   // Logout user
-  static async logout(req: Request, res: Response, next: NextFunction): Promise<void> {
+  static async logout(req: AuthRequest, res: Response): Promise<void> {
     try {
       if (req.user?.userId) {
         await AuthService.logout(req.user.userId);
@@ -182,17 +198,12 @@ export class AuthController {
       });
 
     } catch (error) {
-      logger.error('Logout error:', error);
-
-      res.status(500).json({
-        error: 'Logout failed',
-        message: 'An error occurred during logout'
-      });
+      this.handleError(res, error, 'Logout failed', 'An error occurred during logout');
     }
   }
 
   // Get current user profile
-  static async getProfile(req: Request, res: Response, next: NextFunction): Promise<void> {
+  static async getProfile(req: AuthRequest, res: Response): Promise<void> {
     try {
       if (!req.user) {
         res.status(401).json({
@@ -220,24 +231,18 @@ export class AuthController {
             lastLogin: req.user.userData?.lastLogin
           },
           company: {
-            id: req.user.companyId,
-            // Additional company data would come from populated field
+            id: req.user.companyId?.toString(),
           }
         }
       });
 
     } catch (error) {
-      logger.error('Get profile error:', error);
-
-      res.status(500).json({
-        error: 'Failed to get profile',
-        message: 'An error occurred while fetching user profile'
-      });
+      this.handleError(res, error, 'Failed to get profile', 'An error occurred while fetching user profile');
     }
   }
 
   // Invite user to company
-  static async inviteUser(req: Request, res: Response, next: NextFunction): Promise<void> {
+  static async inviteUser(req: AuthRequest, res: Response): Promise<void> {
     try {
       const { email, firstName, lastName, role, department, jobTitle, phone } = req.body;
 
@@ -279,25 +284,12 @@ export class AuthController {
       });
 
     } catch (error) {
-      logger.error('User invitation error:', error);
-
-      if (error instanceof Error && error.message.includes('already exists')) {
-        res.status(409).json({
-          error: 'Invitation failed',
-          message: error.message
-        });
-        return;
-      }
-
-      res.status(500).json({
-        error: 'Invitation failed',
-        message: 'An error occurred while sending the invitation'
-      });
+      this.handleError(res, error, 'Invitation failed', 'An error occurred while sending the invitation');
     }
   }
 
   // Accept invitation
-  static async acceptInvitation(req: Request, res: Response, next: NextFunction): Promise<void> {
+  static async acceptInvitation(req: Request, res: Response): Promise<void> {
     try {
       const { token, password } = req.body;
 
@@ -316,35 +308,12 @@ export class AuthController {
       });
 
     } catch (error) {
-      logger.error('Accept invitation error:', error);
-
-      if (error instanceof Error) {
-        if (error.message.includes('Invalid or expired')) {
-          res.status(400).json({
-            error: 'Invalid invitation',
-            message: error.message
-          });
-          return;
-        }
-
-        if (error.message.includes('Password validation')) {
-          res.status(400).json({
-            error: 'Password validation failed',
-            message: error.message
-          });
-          return;
-        }
-      }
-
-      res.status(500).json({
-        error: 'Invitation acceptance failed',
-        message: 'An error occurred while accepting the invitation'
-      });
+      this.handleError(res, error, 'Invitation acceptance failed', 'An error occurred while accepting the invitation');
     }
   }
 
   // Change password
-  static async changePassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+  static async changePassword(req: AuthRequest, res: Response): Promise<void> {
     try {
       const { currentPassword, newPassword } = req.body;
 
@@ -364,35 +333,12 @@ export class AuthController {
       });
 
     } catch (error) {
-      logger.error('Change password error:', error);
-
-      if (error instanceof Error) {
-        if (error.message.includes('Current password is incorrect')) {
-          res.status(400).json({
-            error: 'Invalid password',
-            message: error.message
-          });
-          return;
-        }
-
-        if (error.message.includes('Password validation')) {
-          res.status(400).json({
-            error: 'Password validation failed',
-            message: error.message
-          });
-          return;
-        }
-      }
-
-      res.status(500).json({
-        error: 'Password change failed',
-        message: 'An error occurred while changing the password'
-      });
+      this.handleError(res, error, 'Password change failed', 'An error occurred while changing the password');
     }
   }
 
   // Forgot password
-  static async forgotPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+  static async forgotPassword(req: Request, res: Response): Promise<void> {
     try {
       const { email } = req.body;
 
@@ -405,17 +351,12 @@ export class AuthController {
       });
 
     } catch (error) {
-      logger.error('Forgot password error:', error);
-
-      res.status(500).json({
-        error: 'Password reset failed',
-        message: 'An error occurred while processing the password reset request'
-      });
+      this.handleError(res, error, 'Password reset failed', 'An error occurred while processing the password reset request');
     }
   }
 
   // Reset password
-  static async resetPassword(req: Request, res: Response, next: NextFunction): Promise<void> {
+  static async resetPassword(req: Request, res: Response): Promise<void> {
     try {
       const { token, password } = req.body;
 
@@ -427,35 +368,12 @@ export class AuthController {
       });
 
     } catch (error) {
-      logger.error('Reset password error:', error);
-
-      if (error instanceof Error) {
-        if (error.message.includes('Invalid or expired')) {
-          res.status(400).json({
-            error: 'Invalid token',
-            message: error.message
-          });
-          return;
-        }
-
-        if (error.message.includes('Password validation')) {
-          res.status(400).json({
-            error: 'Password validation failed',
-            message: error.message
-          });
-          return;
-        }
-      }
-
-      res.status(500).json({
-        error: 'Password reset failed',
-        message: 'An error occurred while resetting the password'
-      });
+      this.handleError(res, error, 'Password reset failed', 'An error occurred while resetting the password');
     }
   }
 
   // Get subscription plans
-  static async getSubscriptionPlans(req: Request, res: Response, next: NextFunction): Promise<void> {
+  static async getSubscriptionPlans(req: Request, res: Response): Promise<void> {
     try {
       const plans = PaymentService.getAllPlans();
 
@@ -467,105 +385,183 @@ export class AuthController {
       });
 
     } catch (error) {
-      logger.error('Get subscription plans error:', error);
-
-      res.status(500).json({
-        error: 'Failed to retrieve plans',
-        message: 'An error occurred while fetching subscription plans'
-      });
+      this.handleError(res, error, 'Failed to retrieve plans', 'An error occurred while fetching subscription plans');
     }
   }
 
   // Verify payment and activate subscription
-  static async verifyPayment(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const { razorpayOrderId, razorpayPaymentId, razorpaySignature, companyId } = req.body;
+static async verifyPayment(req: Request, res: Response): Promise<void> {
+  try {
+    const { razorpayOrderId, razorpayPaymentId, razorpaySignature, companyId } = req.body;
 
-      let paymentDetails;
+    logger.info('Starting payment verification process', { razorpayOrderId, companyId });
 
-      // Check if this is a development environment without Razorpay
-      if (!PaymentService.isConfigured() && razorpayOrderId.startsWith('order_mock_')) {
-        console.warn('⚠️  Development mode: Skipping Razorpay verification for mock order');
+    // Verify payment signature
+    const isSignatureValid = PaymentService.verifyPaymentSignature({
+      razorpayOrderId,
+      razorpayPaymentId,
+      razorpaySignature
+    });
 
-        // Mock payment details for development
-        paymentDetails = {
-          id: razorpayPaymentId,
-          order_id: razorpayOrderId,
-          status: 'captured',
-          amount: 1000, // Mock amount
-          currency: 'INR',
-          method: 'card'
-        };
-      } else {
-        // Production flow with actual Razorpay verification
-        const isSignatureValid = PaymentService.verifyPaymentSignature({
-          razorpayOrderId,
-          razorpayPaymentId,
-          razorpaySignature
-        });
+    if (!isSignatureValid) {
+      logger.error('Invalid payment signature', { razorpayOrderId });
+      res.status(400).json({
+        error: 'Payment verification failed',
+        message: 'Invalid payment signature'
+      });
+      return;
+    }
 
-        if (!isSignatureValid) {
-          res.status(400).json({
-            error: 'Payment verification failed',
-            message: 'Invalid payment signature'
-          });
-          return;
-        }
+    const paymentDetails = await PaymentService.getPaymentDetails(razorpayPaymentId);
 
-        // Get payment details from Razorpay
-        paymentDetails = await PaymentService.getPaymentDetails(razorpayPaymentId);
+    if (paymentDetails.status !== 'captured') {
+      logger.error('Payment not captured', { status: paymentDetails.status, razorpayOrderId });
+      res.status(400).json({
+        error: 'Payment not completed',
+        message: 'Payment was not successfully captured'
+      });
+      return;
+    }
 
-        if (paymentDetails.status !== 'captured') {
-          res.status(400).json({
-            error: 'Payment not completed',
-            message: 'Payment was not successfully captured'
-          });
-          return;
-        }
+    logger.info('Payment verified successfully, activating subscription', { companyId });
+
+    const result = await AuthService.activateSubscription(companyId, {
+      razorpayOrderId,
+      razorpayPaymentId,
+      razorpaySignature,
+      paymentDetails
+    });
+
+    logger.info('Subscription activated successfully', { companyId: result.company._id });
+
+    res.status(200).json({
+      success: true,
+      message: 'Payment verified successfully. Your subscription is now active!',
+      data: {
+        company: {
+          id: result.company._id,
+          name: result.company.name,
+          subscription: {
+            plan: result.company.subscription.plan,
+            status: result.company.subscription.status,
+            pricing: result.company.subscription.pricing,
+            features: result.company.subscription.features
+          }
+        },
+        token: result.token,
+        expiresIn: '7d'
       }
+    });
 
-      // Update company subscription status
-      const result = await AuthService.activateSubscription(companyId, {
-        razorpayOrderId,
-        razorpayPaymentId,
-        razorpaySignature,
-        paymentDetails
-      });
+  } catch (error) {
+    this.handleError(res, error, 'Payment verification failed', 'An error occurred while verifying the payment');
+  }
+}
 
-      res.status(200).json({
-        success: true,
-        message: 'Payment verified successfully. Your subscription is now active!',
-        data: {
-          company: {
-            id: result.company._id,
-            name: result.company.name,
-            subscription: {
-              plan: result.company.subscription.plan,
-              status: result.company.subscription.status,
-              pricing: result.company.subscription.pricing,
-              features: result.company.subscription.features
-            }
-          },
-          token: result.token,
-          expiresIn: '7d'
-        }
-      });
 
-    } catch (error) {
-      logger.error('Payment verification error:', error);
+  // Retry payment for pending subscriptions
+  static async retryPayment(req: Request, res: Response): Promise<void> {
+    try {
+      const { email } = req.body;
 
-      if (error instanceof Error && error.message.includes('Company not found')) {
+      // Find user with pending payment
+      const user = await User.findOne({ email, isDeleted: false })
+        .populate('companyId');
+
+      if (!user) {
         res.status(404).json({
-          error: 'Company not found',
-          message: error.message
+          error: 'User not found',
+          message: 'No account found with this email address'
         });
         return;
       }
 
-      res.status(500).json({
-        error: 'Payment verification failed',
-        message: 'An error occurred while verifying the payment'
+      const company = user.companyId as any;
+      if (!company) {
+        res.status(404).json({
+          error: 'Company not found',
+          message: 'No company associated with this account'
+        });
+        return;
+      }
+
+      // Check if payment is actually pending
+      if (company.subscription.status !== 'pending_payment') {
+        res.status(400).json({
+          error: 'Payment not required',
+          message: 'Payment has already been completed or subscription is not pending'
+        });
+        return;
+      }
+
+      // Create new payment order
+      const amount = PaymentService.calculatePricing(
+        company.subscription.plan,
+        company.subscription.pricing.interval
+      );
+
+      const paymentOrder = await PaymentService.createOrder({
+        amount,
+        currency: 'INR',
+        companyName: company.name,
+        plan: company.subscription.plan,
+        interval: company.subscription.pricing.interval
       });
+
+      // Update company with new order ID
+      await Company.findByIdAndUpdate(company._id, {
+        'subscription.paymentInfo.razorpayOrderId': paymentOrder.id
+      });
+
+      res.status(200).json({
+        success: true,
+        message: 'New payment order created successfully',
+        data: {
+          company: {
+            id: company._id,
+            name: company.name,
+            subscription: {
+              plan: company.subscription.plan,
+              pricing: company.subscription.pricing
+            }
+          },
+          payment: {
+            orderId: paymentOrder.id,
+            amount: paymentOrder.amount,
+            currency: paymentOrder.currency,
+            key: process.env.RAZORPAY_KEY_ID
+          },
+          subscriptionPlan: PaymentService.getSubscriptionPlan(company.subscription.plan)
+        }
+      });
+
+    } catch (error) {
+      this.handleError(res, error, 'Retry payment failed', 'An error occurred while creating the payment order');
+    }
+  }
+
+  // Verify email address
+  static async verifyEmail(req: Request, res: Response): Promise<void> {
+    try {
+      const { userId } = req.params;
+
+      if (!userId) {
+        res.status(400).json({
+          error: 'Invalid request',
+          message: 'User ID is required'
+        });
+        return;
+      }
+
+      await AuthService.verifyEmail(userId);
+
+      res.status(200).json({
+        success: true,
+        message: 'Email verified successfully'
+      });
+
+    } catch (error) {
+      this.handleError(res, error, 'Email verification failed', 'An error occurred while verifying the email');
     }
   }
 }

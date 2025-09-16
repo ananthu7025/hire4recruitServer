@@ -14,7 +14,14 @@
       "Bash(find:*)",
       "Bash(npm run lint)",
       "Bash(npm uninstall:*)",
-      "Bash(npm run docs:build:*)"
+      "Bash(npm run docs:build:*)",
+      "Bash(npm run docs:generate:*)",
+      "Bash(npm run docs:validate:*)",
+      "Bash(npm run test:*)",
+      "Bash(npx swagger-codegen:*)",
+      "Bash(pkill:*)",
+      "Bash(python:*)",
+      "Bash(npm test)"
     ],
     "deny": [],
     "ask": []

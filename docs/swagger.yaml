@@ -12,6 +12,7 @@ info:
     - Advanced analytics and reporting
     - Razorpay payment integration for subscriptions
     - Role-based permissions and security
+    - Email verification for secure account activation
 
     ## Authentication
     This API uses Bearer token authentication. Include the token in the Authorization header:
@@ -87,8 +88,12 @@ paths:
     $ref: './paths/auth.yaml#/permissions'
   /auth/subscription-plans:
     $ref: './paths/auth.yaml#/subscription-plans'
+  /auth/retry-payment:
+    $ref: './paths/auth.yaml#/retry-payment'
   /auth/verify-payment:
     $ref: './paths/auth.yaml#/verify-payment'
+  /auth/verify-email/{userId}:
+    $ref: './paths/auth.yaml#/verify-email'
 
   # Company endpoints
   /companies/profile:
@@ -111,40 +116,10 @@ paths:
   # User endpoints
   /users:
     $ref: './paths/users.yaml#/users'
-  /users/search:
-    $ref: './paths/users.yaml#/search'
-  /users/role/{role}:
-    $ref: './paths/users.yaml#/by-role'
-  /users/{userId}:
-    $ref: './paths/users.yaml#/user-by-id'
-  /users/{userId}/role:
-    $ref: './paths/users.yaml#/update-role'
-  /users/{userId}/activate:
-    $ref: './paths/users.yaml#/activate'
-  /users/{userId}/deactivate:
-    $ref: './paths/users.yaml#/deactivate'
-  /users/{userId}/activity:
-    $ref: './paths/users.yaml#/activity'
-  /users/{userId}/permissions:
-    $ref: './paths/users.yaml#/permissions'
 
   # Job endpoints
   /jobs:
     $ref: './paths/jobs.yaml#/jobs'
-  /jobs/search/skills:
-    $ref: './paths/jobs.yaml#/search-by-skills'
-  /jobs/stats:
-    $ref: './paths/jobs.yaml#/stats'
-  /jobs/{jobId}:
-    $ref: './paths/jobs.yaml#/job-by-id'
-  /jobs/{jobId}/publish:
-    $ref: './paths/jobs.yaml#/publish'
-  /jobs/{jobId}/clone:
-    $ref: './paths/jobs.yaml#/clone'
-  /jobs/{jobId}/analytics:
-    $ref: './paths/jobs.yaml#/analytics'
-  /jobs/{jobId}/applications:
-    $ref: './paths/jobs.yaml#/applications'
 
   # Candidate endpoints
   /candidates:
@@ -165,40 +140,18 @@ paths:
     $ref: './paths/candidates.yaml#/applications'
   /candidates/{candidateId}/applications/{applicationId}:
     $ref: './paths/candidates.yaml#/update-application'
+  /candidates/{candidateId}/analytics:
+    $ref: './paths/candidates.yaml#/analytics'
+  /candidates/{candidateId}/apply:
+    $ref: './paths/candidates.yaml#/apply-to-job'
 
   # Interview endpoints
   /interviews:
     $ref: './paths/interviews.yaml#/interviews'
-  /interviews/{interviewId}:
-    $ref: './paths/interviews.yaml#/interview-by-id'
-  /interviews/{interviewId}/cancel:
-    $ref: './paths/interviews.yaml#/cancel'
-  /interviews/{interviewId}/feedback:
-    $ref: './paths/interviews.yaml#/feedback'
-  /interviews/calendar:
-    $ref: './paths/interviews.yaml#/calendar'
-  /interviews/availability:
-    $ref: './paths/interviews.yaml#/availability'
-  /interviews/analytics:
-    $ref: './paths/interviews.yaml#/analytics'
 
   # Assessment endpoints
   /assessments:
     $ref: './paths/assessments.yaml#/assessments'
-  /assessments/analytics:
-    $ref: './paths/assessments.yaml#/analytics'
-  /assessments/templates:
-    $ref: './paths/assessments.yaml#/templates'
-  /assessments/templates/{templateId}:
-    $ref: './paths/assessments.yaml#/create-from-template'
-  /assessments/{assessmentId}:
-    $ref: './paths/assessments.yaml#/assessment-by-id'
-  /assessments/{assessmentId}/assign:
-    $ref: './paths/assessments.yaml#/assign'
-  /assessments/{assessmentId}/results:
-    $ref: './paths/assessments.yaml#/results'
-  /assessments/{assessmentId}/analytics:
-    $ref: './paths/assessments.yaml#/assessment-analytics'
 
 components:
   $ref: './components/index.yaml'

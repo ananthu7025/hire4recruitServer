@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Email Verification - {{companyName}}</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
+  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px;">
+    <h2 style="color: #333; margin-bottom: 20px;">Email Verification Required</h2>
+
+    <p style="color: #333; line-height: 1.6;">Hello,</p>
+
+    <p style="color: #333; line-height: 1.6;">
+      Thank you for registering with hire4recruit. Please verify your email address to complete your account setup.
+    </p>
+
+    <div style="margin: 30px 0; text-align: center;">
+      <a href="{{verificationLink}}"
+         style="background-color: #007bff; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
+        Verify Email Address
+      </a>
+    </div>
+
+    <p style="color: #333; line-height: 1.6;">Or copy and paste this link in your browser:</p>
+    <p style="color: #333; line-height: 1.6; word-break: break-all;">
+      <a href="{{verificationLink}}" style="color: #007bff;">{{verificationLink}}</a>
+    </p>
+
+    <p style="color: #333; line-height: 1.6;">This link will expire in 24 hours for security reasons.</p>
+
+    <p style="color: #333; line-height: 1.6;">If you didn't request this verification, please ignore this email.</p>
+
+    <hr style="margin: 30px 0; border: 0; border-top: 1px solid #eee;">
+
+    <p style="color: #666; font-size: 12px; line-height: 1.4;">
+      This email was sent by hire4recruit. Please do not reply to this email.
+    </p>
+  </div>
+</body>
+</html>

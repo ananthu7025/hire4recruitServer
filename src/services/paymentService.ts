@@ -169,31 +169,41 @@ export class PaymentService {
   }
 
   // Verify payment signature
-  static verifyPaymentSignature(params: VerifyPaymentParams): boolean {
-    try {
-      const { razorpayOrderId, razorpayPaymentId, razorpaySignature } = params;
+static verifyPaymentSignature(params: VerifyPaymentParams): boolean {
+  try {
+    const { razorpayOrderId, razorpayPaymentId, razorpaySignature } = params;
 
-      const body = razorpayOrderId + '|' + razorpayPaymentId;
+    console.log('🔍 Starting payment signature verification...');
+    console.log('Inputs:', { razorpayOrderId, razorpayPaymentId, razorpaySignature });
 
-      const expectedSignature = crypto
-        .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET || '')
-        .update(body.toString())
-        .digest('hex');
+    const body = razorpayOrderId + '|' + razorpayPaymentId;
+    console.log('Generated body string for HMAC:', body);
 
-      const isSignatureValid = expectedSignature === razorpaySignature;
+    const expectedSignature = crypto
+      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET || '')
+      .update(body.toString())
+      .digest('hex');
 
-      logger.info('Payment signature verification', {
-        orderId: razorpayOrderId,
-        paymentId: razorpayPaymentId,
-        isValid: isSignatureValid
-      });
+    console.log('Expected signature:', expectedSignature);
 
-      return isSignatureValid;
-    } catch (error) {
-      logger.error('Payment signature verification failed:', error);
-      return false;
-    }
+    const isSignatureValid = expectedSignature === razorpaySignature;
+
+    console.log('Signature validation result:', isSignatureValid);
+
+    logger.info('Payment signature verification', {
+      orderId: razorpayOrderId,
+      paymentId: razorpayPaymentId,
+      isValid: isSignatureValid
+    });
+
+    return isSignatureValid;
+  } catch (error) {
+    console.error('🔥 Payment signature verification failed:', error);
+    logger.error('Payment signature verification failed:', error);
+    return false;
   }
+}
+
 
   // Get payment details from Razorpay
   static async getPaymentDetails(paymentId: string): Promise<any> {

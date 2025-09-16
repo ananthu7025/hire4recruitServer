@@ -57,6 +57,9 @@ export interface ICompany extends Document {
 
   createdAt: Date;
   updatedAt: Date;
+
+  // Instance methods
+  isLoginAllowed(): { allowed: boolean; reason?: string };
 }
 
 const CompanySchema: Schema = new Schema({
@@ -198,6 +201,36 @@ const CompanySchema: Schema = new Schema({
 }, {
   timestamps: true
 });
+
+// Instance methods
+CompanySchema.methods.isLoginAllowed = function(): { allowed: boolean; reason?: string } {
+  if (!this.isActive) {
+    return { allowed: false, reason: 'Company account is inactive' };
+  }
+
+  if (this.subscription.status === 'pending_payment') {
+    return { allowed: false, reason: 'Payment verification required. Please complete your payment to access your account.' };
+  }
+
+  if (this.subscription.status === 'suspended') {
+    return { allowed: false, reason: 'Subscription is suspended. Please contact support or update your payment method.' };
+  }
+
+  if (this.subscription.status === 'cancelled') {
+    return { allowed: false, reason: 'Subscription is cancelled. Please contact support to reactivate your account.' };
+  }
+
+  if (this.subscription.status === 'inactive') {
+    return { allowed: false, reason: 'Subscription is inactive. Please contact support.' };
+  }
+
+  // Check if subscription is expired
+  if (this.subscription.endDate && this.subscription.endDate < new Date()) {
+    return { allowed: false, reason: 'Subscription has expired. Please renew your subscription to continue.' };
+  }
+
+  return { allowed: true };
+};
 
 CompanySchema.index({ domain: 1 });
 CompanySchema.index({ 'primaryContact.email': 1 });

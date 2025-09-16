@@ -10,69 +10,52 @@ import {
   forgotPasswordSchema,
   resetPasswordSchema,
   changePasswordSchema,
+  verifyEmailByUserIdSchema,
 } from "../validators/auth";
 
 const router = Router();
 
-router.post(
-  "/register-company",
+// Common middleware combinations
+const validate = (schema: any) => [
   ValidationMiddleware.sanitizeInput,
-  ValidationMiddleware.validate(registerCompanySchema),
-  AuthController.registerCompany
-);
+  ValidationMiddleware.validate(schema)
+];
 
-router.post(
-  "/login",
-  ValidationMiddleware.sanitizeInput,
-  ValidationMiddleware.validate(loginSchema),
-  AuthMiddleware.authRateLimit,
-  AuthController.login
-);
+const authenticatedRoute = [
+  AuthMiddleware.authenticate
+];
 
-router.post("/logout", AuthMiddleware.authenticate, AuthController.logout);
-
-router.get("/profile", AuthMiddleware.authenticate, AuthController.getProfile);
-
-router.post(
-  "/invite-user",
+const adminRoute = [
   AuthMiddleware.authenticate,
-  AuthMiddleware.requirePermission("users", "create"),
-  ValidationMiddleware.sanitizeInput,
-  ValidationMiddleware.validate(inviteUserSchema),
-  AuthController.inviteUser
-);
+  AuthMiddleware.requirePermission("users", "create")
+];
 
-router.post(
-  "/accept-invitation",
-  ValidationMiddleware.sanitizeInput,
-  ValidationMiddleware.validate(acceptInviteSchema),
-  AuthController.acceptInvitation
-);
+const rateLimitedRoute = [
+  AuthMiddleware.authRateLimit
+];
 
-router.post(
-  "/change-password",
-  AuthMiddleware.authenticate,
-  ValidationMiddleware.sanitizeInput,
-  ValidationMiddleware.validate(changePasswordSchema),
-  AuthController.changePassword
-);
+// Public authentication routes
+router.post("/register-company", validate(registerCompanySchema), AuthController.registerCompany);
+router.post("/login", [...validate(loginSchema), ...rateLimitedRoute], AuthController.login);
 
-router.post(
-  "/forgot-password",
-  ValidationMiddleware.sanitizeInput,
-  ValidationMiddleware.validate(forgotPasswordSchema),
-  AuthMiddleware.authRateLimit,
-  AuthController.forgotPassword
-);
+// Authenticated routes
+router.post("/logout", authenticatedRoute, AuthController.logout);
+router.get("/profile", authenticatedRoute, AuthController.getProfile);
 
-router.post(
-  "/reset-password",
-  ValidationMiddleware.sanitizeInput,
-  ValidationMiddleware.validate(resetPasswordSchema),
-  AuthController.resetPassword
-);
+// Admin routes
+router.post("/invite-user", [...adminRoute, ...validate(inviteUserSchema)], AuthController.inviteUser);
 
-router.get("/verify-token", AuthMiddleware.authenticate, (req, res) => {
+// Invitation routes
+router.post("/accept-invitation", validate(acceptInviteSchema), AuthController.acceptInvitation);
+
+// Password management routes
+router.post("/change-password", [...authenticatedRoute, ...validate(changePasswordSchema)], AuthController.changePassword);
+
+router.post("/forgot-password", [...validate(forgotPasswordSchema), ...rateLimitedRoute], AuthController.forgotPassword);
+router.post("/reset-password", validate(resetPasswordSchema), AuthController.resetPassword);
+
+// Token verification routes
+router.get("/verify-token", authenticatedRoute, (req, res) => {
   res.json({
     success: true,
     message: "Token is valid",
@@ -87,7 +70,11 @@ router.get("/verify-token", AuthMiddleware.authenticate, (req, res) => {
   });
 });
 
-router.get("/permissions", AuthMiddleware.authenticate, (req, res) => {
+// Email verification routes
+router.get("/verify-email/:userId", ValidationMiddleware.validate(verifyEmailByUserIdSchema), AuthController.verifyEmail);
+
+// User permissions route
+router.get("/permissions", authenticatedRoute, (req, res) => {
   res.json({
     success: true,
     data: {
@@ -99,11 +86,7 @@ router.get("/permissions", AuthMiddleware.authenticate, (req, res) => {
 
 // Subscription and payment routes
 router.get("/subscription-plans", AuthController.getSubscriptionPlans);
-
-router.post(
-  "/verify-payment",
-  ValidationMiddleware.sanitizeInput,
-  AuthController.verifyPayment
-);
+router.post("/retry-payment", validate(forgotPasswordSchema), AuthController.retryPayment); // Reuse email validation
+router.post("/verify-payment", ValidationMiddleware.sanitizeInput, AuthController.verifyPayment);
 
 export default router;
