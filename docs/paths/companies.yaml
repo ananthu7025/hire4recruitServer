@@ -1,0 +1,331 @@
+profile:
+  get:
+    tags:
+      - Companies
+    summary: Get company profile
+    description: Get current company profile information
+    operationId: getCompanyProfile
+    security:
+      - BearerAuth: []
+    responses:
+      '200':
+        description: Company profile retrieved successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/index.yaml#/schemas/Company'
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+  put:
+    tags:
+      - Companies
+    summary: Update company profile
+    description: Update company profile information (admin only)
+    operationId: updateCompanyProfile
+    security:
+      - BearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+                maxLength: 100
+              industry:
+                type: string
+              size:
+                type: string
+                enum: [startup, small, medium, large, enterprise]
+              phone:
+                type: string
+              website:
+                type: string
+                format: uri
+              address:
+                $ref: '../components/index.yaml#/schemas/Address'
+    responses:
+      '200':
+        description: Company profile updated successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/index.yaml#/schemas/Company'
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '403':
+        $ref: '../components/index.yaml#/responses/ForbiddenError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+stats:
+  get:
+    tags:
+      - Companies
+    summary: Get company statistics
+    description: Get company dashboard statistics
+    operationId: getCompanyStats
+    security:
+      - BearerAuth: []
+    responses:
+      '200':
+        description: Company statistics retrieved successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        totalUsers:
+                          type: integer
+                        activeJobs:
+                          type: integer
+                        totalCandidates:
+                          type: integer
+                        interviewsThisMonth:
+                          type: integer
+                        hiredThisMonth:
+                          type: integer
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+users:
+  get:
+    tags:
+      - Companies
+    summary: Get company users
+    description: Get all users in the company
+    operationId: getCompanyUsers
+    security:
+      - BearerAuth: []
+    parameters:
+      - $ref: '../components/index.yaml#/parameters/PageParam'
+      - $ref: '../components/index.yaml#/parameters/LimitParam'
+    responses:
+      '200':
+        description: Company users retrieved successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        users:
+                          type: array
+                          items:
+                            $ref: '../components/index.yaml#/schemas/User'
+                        pagination:
+                          $ref: '../components/index.yaml#/schemas/PaginationMeta'
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '403':
+        $ref: '../components/index.yaml#/responses/ForbiddenError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+subscription:
+  put:
+    tags:
+      - Companies
+    summary: Update subscription
+    description: Update company subscription plan (admin only)
+    operationId: updateSubscription
+    security:
+      - BearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              plan:
+                type: string
+                enum: [basic, professional, enterprise]
+              billing:
+                type: object
+                properties:
+                  cycle:
+                    type: string
+                    enum: [monthly, annual]
+                  paymentMethod:
+                    type: string
+            required:
+              - plan
+    responses:
+      '200':
+        description: Subscription updated successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        subscription:
+                          $ref: '../components/index.yaml#/schemas/Subscription'
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '403':
+        $ref: '../components/index.yaml#/responses/ForbiddenError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+subscription-limits:
+  get:
+    tags:
+      - Companies
+    summary: Check subscription limits
+    description: Check current subscription limits and usage
+    operationId: checkSubscriptionLimits
+    security:
+      - BearerAuth: []
+    responses:
+      '200':
+        description: Subscription limits retrieved successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        limits:
+                          type: object
+                          properties:
+                            maxUsers:
+                              type: integer
+                            maxJobs:
+                              type: integer
+                            currentUsers:
+                              type: integer
+                            currentJobs:
+                              type: integer
+                            features:
+                              type: array
+                              items:
+                                type: string
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+activity:
+  get:
+    tags:
+      - Companies
+    summary: Get activity summary
+    description: Get company activity summary and reports
+    operationId: getActivitySummary
+    security:
+      - BearerAuth: []
+    responses:
+      '200':
+        description: Activity summary retrieved successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        recentActivity:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              type:
+                                type: string
+                              description:
+                                type: string
+                              timestamp:
+                                type: string
+                                format: date-time
+                              userId:
+                                type: string
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '403':
+        $ref: '../components/index.yaml#/responses/ForbiddenError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+deactivate:
+  post:
+    tags:
+      - Companies
+    summary: Deactivate company
+    description: Deactivate company account (admin only)
+    operationId: deactivateCompany
+    security:
+      - BearerAuth: []
+    responses:
+      '200':
+        description: Company deactivated successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../components/index.yaml#/schemas/SuccessResponse'
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '403':
+        $ref: '../components/index.yaml#/responses/ForbiddenError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+reactivate:
+  post:
+    tags:
+      - Companies
+    summary: Reactivate company
+    description: Reactivate company account (admin only)
+    operationId: reactivateCompany
+    security:
+      - BearerAuth: []
+    responses:
+      '200':
+        description: Company reactivated successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../components/index.yaml#/schemas/SuccessResponse'
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '403':
+        $ref: '../components/index.yaml#/responses/ForbiddenError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'

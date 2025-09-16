@@ -1,0 +1,114 @@
+# Interviews endpoints placeholder
+
+interviews:
+  get:
+    tags:
+      - Interviews
+    summary: Get all interviews
+    description: Get all interviews with pagination and filtering
+    operationId: getInterviews
+    security:
+      - BearerAuth: []
+    parameters:
+      - $ref: '../components/index.yaml#/parameters/PageParam'
+      - $ref: '../components/index.yaml#/parameters/LimitParam'
+      - name: status
+        in: query
+        description: Interview status filter
+        schema:
+          type: string
+          enum: [scheduled, in_progress, completed, cancelled, no_show]
+    responses:
+      '200':
+        description: Interviews retrieved successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        interviews:
+                          type: array
+                          items:
+                            $ref: '../components/index.yaml#/schemas/Interview'
+                        pagination:
+                          $ref: '../components/index.yaml#/schemas/PaginationMeta'
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+  post:
+    tags:
+      - Interviews
+    summary: Schedule interview
+    description: Schedule a new interview
+    operationId: scheduleInterview
+    security:
+      - BearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              candidateId:
+                type: string
+                format: objectId
+              jobId:
+                type: string
+                format: objectId
+              type:
+                type: string
+                enum: [phone_screening, video_call, in_person, technical, behavioral, panel]
+              format:
+                type: string
+                enum: [phone_call, video_call, in_person]
+              scheduledAt:
+                type: string
+                format: date-time
+              duration:
+                type: integer
+                description: Duration in minutes
+              interviewers:
+                type: array
+                items:
+                  type: string
+                  format: objectId
+              location:
+                $ref: '../components/index.yaml#/schemas/InterviewLocation'
+              notes:
+                type: string
+            required:
+              - candidateId
+              - jobId
+              - type
+              - format
+              - scheduledAt
+              - duration
+              - interviewers
+    responses:
+      '201':
+        description: Interview scheduled successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/index.yaml#/schemas/Interview'
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '400':
+        $ref: '../components/index.yaml#/responses/ValidationError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+# Additional endpoints would be defined here for other interview operations

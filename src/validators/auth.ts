@@ -23,6 +23,16 @@ export const registerCompanySchema = z.object({
       message: 'Company size is required and must be one of: startup, small, medium, large, enterprise'
     }),
 
+    // Subscription details
+    subscription: z.object({
+      plan: z.enum(['basic', 'professional', 'enterprise'], {
+        message: 'Subscription plan is required and must be one of: basic, professional, enterprise'
+      }),
+      interval: z.enum(['monthly', 'annual'], {
+        message: 'Billing interval is required and must be either monthly or annual'
+      })
+    }),
+
     // Primary contact (admin user)
     adminFirstName: z.string()
       .min(2, 'First name must be at least 2 characters')

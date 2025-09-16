@@ -1,0 +1,2096 @@
+{
+  "info": {
+    "name": "hire4recruit API",
+    "description": "Comprehensive Postman collection for hire4recruit recruitment management system API v1.0",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{auth_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "api_version",
+      "value": "v1",
+      "type": "string"
+    },
+    {
+      "key": "auth_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "company_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "job_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "candidate_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "interview_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "assessment_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "razorpay_order_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            },
+            "description": "Check server health status"
+          }
+        },
+        {
+          "name": "API Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}"]
+            },
+            "description": "Get API information and features"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register Company",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.company && response.data.company.id) {",
+                  "        pm.collectionVariables.set('company_id', response.data.company.id);",
+                  "    }",
+                  "    if (response.data && response.data.adminUser && response.data.adminUser.id) {",
+                  "        pm.collectionVariables.set('user_id', response.data.adminUser.id);",
+                  "    }",
+                  "    if (response.data && response.data.payment && response.data.payment.orderId) {",
+                  "        pm.collectionVariables.set('razorpay_order_id', response.data.payment.orderId);",
+                  "    }",
+                  "    console.log('Company registered. Payment required to activate subscription.');",
+                  "    console.log('Order ID:', response.data.payment.orderId);",
+                  "    console.log('Amount:', response.data.payment.amount);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"companyName\": \"Tech Solutions Inc\",\n  \"domain\": \"techsolutions.com\",\n  \"industry\": \"Technology\",\n  \"size\": \"medium\",\n  \"subscription\": {\n    \"plan\": \"professional\",\n    \"interval\": \"annual\"\n  },\n  \"adminFirstName\": \"John\",\n  \"adminLastName\": \"Doe\",\n  \"adminEmail\": \"admin@techsolutions.com\",\n  \"adminPassword\": \"SecurePass123!\",\n  \"adminPhone\": \"+1234567890\",\n  \"address\": {\n    \"street\": \"123 Tech Street\",\n    \"city\": \"San Francisco\",\n    \"state\": \"CA\",\n    \"country\": \"USA\",\n    \"postalCode\": \"94105\"\n  },\n  \"phone\": \"+1234567890\",\n  \"website\": \"https://techsolutions.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/auth/register-company",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "auth", "register-company"]
+            },
+            "description": "Register a new company with admin user"
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.token) {",
+                  "        pm.collectionVariables.set('auth_token', response.data.token);",
+                  "    }",
+                  "    if (response.data && response.data.user) {",
+                  "        pm.collectionVariables.set('user_id', response.data.user.id);",
+                  "        pm.collectionVariables.set('company_id', response.data.user.companyId);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@techsolutions.com\",\n  \"password\": \"SecurePass123!\",\n  \"rememberMe\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "auth", "login"]
+            },
+            "description": "Login user and get authentication token"
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "auth", "logout"]
+            },
+            "description": "Logout current user"
+          }
+        },
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/auth/profile",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "auth", "profile"]
+            },
+            "description": "Get current user profile"
+          }
+        },
+        {
+          "name": "Invite User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"recruiter@techsolutions.com\",\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Smith\",\n  \"role\": \"recruiter\",\n  \"department\": \"HR\",\n  \"jobTitle\": \"Senior Recruiter\",\n  \"phone\": \"+1234567891\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/auth/invite-user",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "auth", "invite-user"]
+            },
+            "description": "Invite a new user to the company"
+          }
+        },
+        {
+          "name": "Accept Invitation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"invitation_token_here\",\n  \"password\": \"SecurePass123!\",\n  \"confirmPassword\": \"SecurePass123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/auth/accept-invitation",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "auth", "accept-invitation"]
+            },
+            "description": "Accept user invitation and set password"
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"SecurePass123!\",\n  \"newPassword\": \"NewSecurePass123!\",\n  \"confirmPassword\": \"NewSecurePass123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/auth/change-password",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "auth", "change-password"]
+            },
+            "description": "Change user password"
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@techsolutions.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/auth/forgot-password",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "auth", "forgot-password"]
+            },
+            "description": "Request password reset email"
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"reset_token_here\",\n  \"password\": \"NewSecurePass123!\",\n  \"confirmPassword\": \"NewSecurePass123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/auth/reset-password",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "auth", "reset-password"]
+            },
+            "description": "Reset password using reset token"
+          }
+        },
+        {
+          "name": "Verify Token",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/auth/verify-token",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "auth", "verify-token"]
+            },
+            "description": "Verify if authentication token is valid"
+          }
+        },
+        {
+          "name": "Get Permissions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/auth/permissions",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "auth", "permissions"]
+            },
+            "description": "Get user permissions and role"
+          }
+        },
+        {
+          "name": "Get Subscription Plans",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/auth/subscription-plans",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "auth", "subscription-plans"]
+            },
+            "description": "Get available subscription plans with pricing"
+          }
+        },
+        {
+          "name": "Verify Payment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.token) {",
+                  "        pm.collectionVariables.set('auth_token', response.data.token);",
+                  "    }",
+                  "    if (response.data && response.data.company && response.data.company.id) {",
+                  "        pm.collectionVariables.set('company_id', response.data.company.id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"razorpayOrderId\": \"order_razorpay_id_here\",\n  \"razorpayPaymentId\": \"pay_razorpay_id_here\",\n  \"razorpaySignature\": \"signature_here\",\n  \"companyId\": \"{{company_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/auth/verify-payment",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "auth", "verify-payment"]
+            },
+            "description": "Verify Razorpay payment and activate subscription"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Companies",
+      "item": [
+        {
+          "name": "Get Company Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/companies/profile",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "companies", "profile"]
+            },
+            "description": "Get company profile information"
+          }
+        },
+        {
+          "name": "Update Company Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Tech Solutions Inc Updated\",\n  \"industry\": \"Software Technology\",\n  \"size\": \"large\",\n  \"phone\": \"+1234567890\",\n  \"website\": \"https://techsolutions.com\",\n  \"address\": {\n    \"street\": \"456 Innovation Blvd\",\n    \"city\": \"San Francisco\",\n    \"state\": \"CA\",\n    \"country\": \"USA\",\n    \"postalCode\": \"94107\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/companies/profile",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "companies", "profile"]
+            },
+            "description": "Update company profile (admin only)"
+          }
+        },
+        {
+          "name": "Get Company Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/companies/stats",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "companies", "stats"]
+            },
+            "description": "Get company statistics"
+          }
+        },
+        {
+          "name": "Get Company Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/companies/users?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "companies", "users"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get all users in the company"
+          }
+        },
+        {
+          "name": "Update Subscription",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plan\": \"enterprise\",\n  \"billing\": {\n    \"cycle\": \"annual\",\n    \"paymentMethod\": \"card\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/companies/subscription",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "companies", "subscription"]
+            },
+            "description": "Update company subscription (admin only)"
+          }
+        },
+        {
+          "name": "Check Subscription Limits",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/companies/subscription/limits",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "companies", "subscription", "limits"]
+            },
+            "description": "Check current subscription limits"
+          }
+        },
+        {
+          "name": "Get Activity Summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/companies/activity",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "companies", "activity"]
+            },
+            "description": "Get company activity summary"
+          }
+        },
+        {
+          "name": "Deactivate Company",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/companies/deactivate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "companies", "deactivate"]
+            },
+            "description": "Deactivate company (admin only)"
+          }
+        },
+        {
+          "name": "Reactivate Company",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/companies/reactivate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "companies", "reactivate"]
+            },
+            "description": "Reactivate company (admin only)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/users?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "users"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get all users with pagination"
+          }
+        },
+        {
+          "name": "Search Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/users/search?q=john&role=recruiter",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "users", "search"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "john"
+                },
+                {
+                  "key": "role",
+                  "value": "recruiter"
+                }
+              ]
+            },
+            "description": "Search users by query and filters"
+          }
+        },
+        {
+          "name": "Get Users by Role",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/users/role/recruiter",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "users", "role", "recruiter"]
+            },
+            "description": "Get users by specific role"
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/users/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "users", "{{user_id}}"]
+            },
+            "description": "Get specific user by ID"
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe Updated\",\n  \"phone\": \"+1234567890\",\n  \"department\": \"Engineering\",\n  \"jobTitle\": \"Senior Software Engineer\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/users/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "users", "{{user_id}}"]
+            },
+            "description": "Update user information"
+          }
+        },
+        {
+          "name": "Update User Role",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"hr_manager\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/users/{{user_id}}/role",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "users", "{{user_id}}", "role"]
+            },
+            "description": "Update user role (admin/hr_manager only)"
+          }
+        },
+        {
+          "name": "Activate User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/users/{{user_id}}/activate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "users", "{{user_id}}", "activate"]
+            },
+            "description": "Activate user account"
+          }
+        },
+        {
+          "name": "Deactivate User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/users/{{user_id}}/deactivate",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "users", "{{user_id}}", "deactivate"]
+            },
+            "description": "Deactivate user account"
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/users/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "users", "{{user_id}}"]
+            },
+            "description": "Delete user account"
+          }
+        },
+        {
+          "name": "Get User Activity",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/users/{{user_id}}/activity",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "users", "{{user_id}}", "activity"]
+            },
+            "description": "Get user activity log"
+          }
+        },
+        {
+          "name": "Get User Permissions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/users/{{user_id}}/permissions",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "users", "{{user_id}}", "permissions"]
+            },
+            "description": "Get user permissions"
+          }
+        },
+        {
+          "name": "Update User Permissions",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"permissions\": {\n    \"jobs\": {\n      \"create\": true,\n      \"read\": true,\n      \"update\": true,\n      \"delete\": false\n    },\n    \"candidates\": {\n      \"create\": true,\n      \"read\": true,\n      \"update\": true,\n      \"delete\": false\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/users/{{user_id}}/permissions",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "users", "{{user_id}}", "permissions"]
+            },
+            "description": "Update user permissions (admin only)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Jobs",
+      "item": [
+        {
+          "name": "Get All Jobs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/jobs?page=1&limit=10&status=active",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "jobs"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "status",
+                  "value": "active"
+                }
+              ]
+            },
+            "description": "Get all jobs with filters and pagination"
+          }
+        },
+        {
+          "name": "Create Job",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.id) {",
+                  "        pm.collectionVariables.set('job_id', response.data.id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Senior Software Engineer\",\n  \"description\": \"We are looking for a senior software engineer to join our team\",\n  \"department\": \"Engineering\",\n  \"location\": {\n    \"type\": \"hybrid\",\n    \"city\": \"San Francisco\",\n    \"state\": \"CA\",\n    \"country\": \"USA\"\n  },\n  \"employment\": {\n    \"type\": \"full-time\",\n    \"level\": \"senior\"\n  },\n  \"salary\": {\n    \"min\": 120000,\n    \"max\": 180000,\n    \"currency\": \"USD\",\n    \"period\": \"annual\"\n  },\n  \"requirements\": {\n    \"experience\": \"5+ years\",\n    \"education\": \"Bachelor's degree in Computer Science or related field\",\n    \"skills\": [\"JavaScript\", \"React\", \"Node.js\", \"TypeScript\", \"MongoDB\"]\n  },\n  \"benefits\": [\"Health insurance\", \"401k\", \"Flexible hours\", \"Remote work\"],\n  \"hiringManager\": \"{{user_id}}\",\n  \"urgency\": \"medium\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/jobs",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "jobs"]
+            },
+            "description": "Create a new job posting"
+          }
+        },
+        {
+          "name": "Get Job by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/jobs/{{job_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "jobs", "{{job_id}}"]
+            },
+            "description": "Get specific job by ID"
+          }
+        },
+        {
+          "name": "Update Job",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Senior Software Engineer - Updated\",\n  \"description\": \"Updated job description\",\n  \"urgency\": \"high\",\n  \"status\": \"active\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/jobs/{{job_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "jobs", "{{job_id}}"]
+            },
+            "description": "Update job details"
+          }
+        },
+        {
+          "name": "Delete Job",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/jobs/{{job_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "jobs", "{{job_id}}"]
+            },
+            "description": "Delete job posting"
+          }
+        },
+        {
+          "name": "Publish Job",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/jobs/{{job_id}}/publish",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "jobs", "{{job_id}}", "publish"]
+            },
+            "description": "Publish job posting"
+          }
+        },
+        {
+          "name": "Clone Job",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/jobs/{{job_id}}/clone",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "jobs", "{{job_id}}", "clone"]
+            },
+            "description": "Clone existing job posting"
+          }
+        },
+        {
+          "name": "Get Job Analytics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/jobs/{{job_id}}/analytics",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "jobs", "{{job_id}}", "analytics"]
+            },
+            "description": "Get job analytics and metrics"
+          }
+        },
+        {
+          "name": "Get Job Applications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/jobs/{{job_id}}/applications?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "jobs", "{{job_id}}", "applications"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get applications for specific job"
+          }
+        },
+        {
+          "name": "Search Jobs by Skills",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/jobs/search/skills?skills=JavaScript,React,Node.js",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "jobs", "search", "skills"],
+              "query": [
+                {
+                  "key": "skills",
+                  "value": "JavaScript,React,Node.js"
+                }
+              ]
+            },
+            "description": "Search jobs by required skills"
+          }
+        },
+        {
+          "name": "Get Company Job Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/jobs/stats",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "jobs", "stats"]
+            },
+            "description": "Get company job statistics"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Candidates",
+      "item": [
+        {
+          "name": "Get All Candidates",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/candidates?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "candidates"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get all candidates with pagination"
+          }
+        },
+        {
+          "name": "Get Talent Pool",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/candidates/talent-pool?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "candidates", "talent-pool"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get talent pool candidates"
+          }
+        },
+        {
+          "name": "Search Candidates",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"JavaScript developer\",\n  \"skills\": [\"JavaScript\", \"React\"],\n  \"experience\": {\n    \"min\": 2,\n    \"max\": 10\n  },\n  \"location\": \"San Francisco\",\n  \"availability\": \"available\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/candidates/search",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "candidates", "search"]
+            },
+            "description": "Search candidates with filters"
+          }
+        },
+        {
+          "name": "Create Candidate",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.id) {",
+                  "        pm.collectionVariables.set('candidate_id', response.data.id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "multipart/form-data"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "firstName",
+                  "value": "Alice",
+                  "type": "text"
+                },
+                {
+                  "key": "lastName",
+                  "value": "Johnson",
+                  "type": "text"
+                },
+                {
+                  "key": "email",
+                  "value": "alice.johnson@email.com",
+                  "type": "text"
+                },
+                {
+                  "key": "phone",
+                  "value": "+1234567892",
+                  "type": "text"
+                },
+                {
+                  "key": "location",
+                  "value": "{\"city\": \"San Francisco\", \"state\": \"CA\", \"country\": \"USA\"}",
+                  "type": "text"
+                },
+                {
+                  "key": "skills",
+                  "value": "[\"JavaScript\", \"React\", \"Node.js\", \"Python\"]",
+                  "type": "text"
+                },
+                {
+                  "key": "experience",
+                  "value": "5",
+                  "type": "text"
+                },
+                {
+                  "key": "availability",
+                  "value": "available",
+                  "type": "text"
+                },
+                {
+                  "key": "resume",
+                  "type": "file",
+                  "src": "resume.pdf"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/candidates",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "candidates"]
+            },
+            "description": "Create new candidate with resume upload"
+          }
+        },
+        {
+          "name": "Get Candidate by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/candidates/{{candidate_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "candidates", "{{candidate_id}}"]
+            },
+            "description": "Get specific candidate by ID"
+          }
+        },
+        {
+          "name": "Update Candidate",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Alice\",\n  \"lastName\": \"Johnson Updated\",\n  \"phone\": \"+1234567892\",\n  \"skills\": [\"JavaScript\", \"React\", \"Node.js\", \"Python\", \"TypeScript\"],\n  \"experience\": 6,\n  \"notes\": \"Excellent candidate with strong technical skills\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/candidates/{{candidate_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "candidates", "{{candidate_id}}"]
+            },
+            "description": "Update candidate information"
+          }
+        },
+        {
+          "name": "Update Candidate Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"interview_scheduled\",\n  \"notes\": \"Phone screening completed successfully\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/candidates/{{candidate_id}}/status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "candidates", "{{candidate_id}}", "status"]
+            },
+            "description": "Update candidate status"
+          }
+        },
+        {
+          "name": "Upload Resume",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "resume",
+                  "type": "file",
+                  "src": "updated_resume.pdf"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/candidates/{{candidate_id}}/resume",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "candidates", "{{candidate_id}}", "resume"]
+            },
+            "description": "Upload or update candidate resume"
+          }
+        },
+        {
+          "name": "Delete Candidate",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/candidates/{{candidate_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "candidates", "{{candidate_id}}"]
+            },
+            "description": "Delete candidate"
+          }
+        },
+        {
+          "name": "Get Candidate Summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/candidates/{{candidate_id}}/summary",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "candidates", "{{candidate_id}}", "summary"]
+            },
+            "description": "Get AI-generated candidate summary"
+          }
+        },
+        {
+          "name": "Get Candidate Applications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/candidates/{{candidate_id}}/applications?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "candidates", "{{candidate_id}}", "applications"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get candidate's job applications"
+          }
+        },
+        {
+          "name": "Update Candidate Application",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"interview_scheduled\",\n  \"stage\": \"technical_interview\",\n  \"notes\": \"Candidate passed initial screening\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/candidates/{{candidate_id}}/applications/application_id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "candidates", "{{candidate_id}}", "applications", "application_id"]
+            },
+            "description": "Update candidate's specific application"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Interviews",
+      "item": [
+        {
+          "name": "Get All Interviews",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/interviews?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "interviews"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get all interviews with pagination"
+          }
+        },
+        {
+          "name": "Schedule Interview",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.id) {",
+                  "        pm.collectionVariables.set('interview_id', response.data.id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"candidateId\": \"{{candidate_id}}\",\n  \"jobId\": \"{{job_id}}\",\n  \"type\": \"technical\",\n  \"format\": \"video_call\",\n  \"scheduledAt\": \"2024-12-20T14:00:00.000Z\",\n  \"duration\": 60,\n  \"interviewers\": [\"{{user_id}}\"],\n  \"location\": {\n    \"type\": \"virtual\",\n    \"platform\": \"zoom\",\n    \"meetingUrl\": \"https://zoom.us/j/123456789\"\n  },\n  \"notes\": \"Technical interview focusing on JavaScript and React\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/interviews",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "interviews"]
+            },
+            "description": "Schedule a new interview"
+          }
+        },
+        {
+          "name": "Get Interview by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/interviews/{{interview_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "interviews", "{{interview_id}}"]
+            },
+            "description": "Get specific interview by ID"
+          }
+        },
+        {
+          "name": "Update Interview",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scheduledAt\": \"2024-12-20T15:00:00.000Z\",\n  \"duration\": 90,\n  \"notes\": \"Extended technical interview - updated time\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/interviews/{{interview_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "interviews", "{{interview_id}}"]
+            },
+            "description": "Update interview details"
+          }
+        },
+        {
+          "name": "Cancel Interview",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Candidate requested rescheduling\",\n  \"notifyCandidate\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/interviews/{{interview_id}}/cancel",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "interviews", "{{interview_id}}", "cancel"]
+            },
+            "description": "Cancel an interview"
+          }
+        },
+        {
+          "name": "Submit Feedback",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 4,\n  \"feedback\": \"Strong technical skills, good communication\",\n  \"recommendation\": \"hire\",\n  \"strengths\": [\"Problem solving\", \"Technical knowledge\", \"Communication\"],\n  \"weaknesses\": [\"Could improve system design understanding\"],\n  \"notes\": \"Candidate demonstrated excellent coding skills during the technical portion\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/interviews/{{interview_id}}/feedback",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "interviews", "{{interview_id}}", "feedback"]
+            },
+            "description": "Submit interview feedback"
+          }
+        },
+        {
+          "name": "Get Feedback",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/interviews/{{interview_id}}/feedback",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "interviews", "{{interview_id}}", "feedback"]
+            },
+            "description": "Get interview feedback"
+          }
+        },
+        {
+          "name": "Get Calendar View",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/interviews/calendar?start=2024-12-01&end=2024-12-31",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "interviews", "calendar"],
+              "query": [
+                {
+                  "key": "start",
+                  "value": "2024-12-01"
+                },
+                {
+                  "key": "end",
+                  "value": "2024-12-31"
+                }
+              ]
+            },
+            "description": "Get calendar view of interviews"
+          }
+        },
+        {
+          "name": "Check Availability",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/interviews/availability?date=2024-12-20&interviewerId={{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "interviews", "availability"],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2024-12-20"
+                },
+                {
+                  "key": "interviewerId",
+                  "value": "{{user_id}}"
+                }
+              ]
+            },
+            "description": "Check interviewer availability"
+          }
+        },
+        {
+          "name": "Get Interview Analytics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/interviews/analytics",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "interviews", "analytics"]
+            },
+            "description": "Get interview analytics and metrics"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Assessments",
+      "item": [
+        {
+          "name": "Get All Assessments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/assessments?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "assessments"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get all assessments with pagination"
+          }
+        },
+        {
+          "name": "Get Assessment Analytics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/assessments/analytics",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "assessments", "analytics"]
+            },
+            "description": "Get overall assessment analytics"
+          }
+        },
+        {
+          "name": "Get Assessment Templates",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/assessments/templates",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "assessments", "templates"]
+            },
+            "description": "Get available assessment templates"
+          }
+        },
+        {
+          "name": "Create Assessment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.id) {",
+                  "        pm.collectionVariables.set('assessment_id', response.data.id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"JavaScript Developer Assessment\",\n  \"description\": \"Technical assessment for JavaScript developer position\",\n  \"type\": \"technical\",\n  \"jobId\": \"{{job_id}}\",\n  \"timeLimit\": 120,\n  \"passingScore\": 75,\n  \"questions\": [\n    {\n      \"type\": \"multiple_choice\",\n      \"question\": \"What is the difference between let and var in JavaScript?\",\n      \"options\": [\n        \"No difference\",\n        \"let has block scope, var has function scope\",\n        \"var has block scope, let has function scope\",\n        \"Both have global scope\"\n      ],\n      \"correctAnswer\": 1,\n      \"points\": 10\n    },\n    {\n      \"type\": \"coding\",\n      \"question\": \"Write a function that returns the factorial of a number\",\n      \"points\": 20,\n      \"expectedOutput\": \"factorial(5) should return 120\"\n    }\n  ],\n  \"instructions\": \"Please complete all questions within the time limit\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/assessments",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "assessments"]
+            },
+            "description": "Create a new assessment"
+          }
+        },
+        {
+          "name": "Create From Template",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Frontend Developer Assessment\",\n  \"jobId\": \"{{job_id}}\",\n  \"customizations\": {\n    \"timeLimit\": 90,\n    \"passingScore\": 80\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/assessments/templates/template_id",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "assessments", "templates", "template_id"]
+            },
+            "description": "Create assessment from template"
+          }
+        },
+        {
+          "name": "Get Assessment by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/assessments/{{assessment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "assessments", "{{assessment_id}}"]
+            },
+            "description": "Get specific assessment by ID"
+          }
+        },
+        {
+          "name": "Update Assessment",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"JavaScript Developer Assessment - Updated\",\n  \"timeLimit\": 150,\n  \"passingScore\": 80,\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/assessments/{{assessment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "assessments", "{{assessment_id}}"]
+            },
+            "description": "Update assessment details"
+          }
+        },
+        {
+          "name": "Assign Assessment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"candidateIds\": [\"{{candidate_id}}\"],\n  \"dueDate\": \"2024-12-25T23:59:59.000Z\",\n  \"instructions\": \"Please complete this assessment by the due date\",\n  \"sendNotification\": true\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/assessments/{{assessment_id}}/assign",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "assessments", "{{assessment_id}}", "assign"]
+            },
+            "description": "Assign assessment to candidates"
+          }
+        },
+        {
+          "name": "Get Assessment Results",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/assessments/{{assessment_id}}/results?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "assessments", "{{assessment_id}}", "results"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get assessment results"
+          }
+        },
+        {
+          "name": "Get Specific Assessment Analytics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/assessments/{{assessment_id}}/analytics",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "assessments", "{{assessment_id}}", "analytics"]
+            },
+            "description": "Get analytics for specific assessment"
+          }
+        },
+        {
+          "name": "Delete Assessment",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/assessments/{{assessment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "assessments", "{{assessment_id}}"]
+            },
+            "description": "Delete assessment"
+          }
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Auto-set base URL if not set",
+          "if (!pm.collectionVariables.get('base_url')) {",
+          "    pm.collectionVariables.set('base_url', 'http://localhost:3000');",
+          "}",
+          "",
+          "// Auto-set API version if not set",
+          "if (!pm.collectionVariables.get('api_version')) {",
+          "    pm.collectionVariables.set('api_version', 'v1');",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global test script for all requests",
+          "pm.test('Response time is reasonable', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+          "});",
+          "",
+          "pm.test('Response has correct content type', function () {",
+          "    if (pm.response.code !== 204) {",
+          "        pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+          "    }",
+          "});",
+          "",
+          "// Log response for debugging",
+          "if (pm.response.code >= 400) {",
+          "    console.log('Error response:', pm.response.text());",
+          "}"
+        ]
+      }
+    }
+  ]
+}

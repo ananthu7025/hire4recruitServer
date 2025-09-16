@@ -9,7 +9,12 @@
     "start": "node dist/app.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint src/**/*.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "docs:build": "swagger-cli bundle docs/swagger.yaml --outfile dist/swagger.json --dereference",
+    "docs:validate": "swagger-cli validate docs/swagger.yaml",
+    "docs:serve": "npm run docs:build && swagger-ui-serve dist/swagger.json",
+    "docs:redoc": "redoc-cli build dist/swagger.json --output dist/docs/index.html",
+    "docs:generate": "npm run docs:validate && npm run docs:build && npm run docs:redoc"
   },
   "author": "",
   "license": "ISC",
@@ -24,7 +29,6 @@
     "@types/multer": "^2.0.0",
     "@types/node": "^24.4.0",
     "@types/nodemailer": "^7.0.1",
-    "@types/uuid": "^10.0.0",
     "bcryptjs": "^3.0.2",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
@@ -38,18 +42,24 @@
     "nodemailer": "^7.0.6",
     "nodemon": "^3.1.10",
     "pdf-parse": "^1.1.1",
-    "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.1",
+    "razorpay": "^2.9.6",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.2",
-    "uuid": "^13.0.0",
+    "uuid": "^9.0.1",
     "winston": "^3.17.0",
     "zod": "^4.1.8"
   },
   "keywords": [],
   "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
     "@types/pdf-parse": "^1.1.5",
     "@types/swagger-jsdoc": "^6.0.4",
-    "@types/swagger-ui-express": "^4.1.8"
+    "@types/swagger-ui-express": "^4.1.8",
+    "@types/uuid": "^9.0.8",
+    "js-yaml": "^4.1.0",
+    "redoc-cli": "^0.13.21",
+    "swagger-cli": "^4.0.4",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
   }
 }

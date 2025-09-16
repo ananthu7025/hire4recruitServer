@@ -12,7 +12,9 @@
       "Bash(findstr:*)",
       "Bash(taskkill:*)",
       "Bash(find:*)",
-      "Bash(npm run lint)"
+      "Bash(npm run lint)",
+      "Bash(npm uninstall:*)",
+      "Bash(npm run docs:build:*)"
     ],
     "deny": [],
     "ask": []

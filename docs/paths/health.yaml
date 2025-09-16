@@ -1,0 +1,62 @@
+health:
+  get:
+    tags:
+      - Health
+    summary: Health check
+    description: Check if the server is running and healthy
+    operationId: healthCheck
+    responses:
+      '200':
+        description: Server is healthy
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  example: OK
+                timestamp:
+                  type: string
+                  format: date-time
+                uptime:
+                  type: number
+                  description: Server uptime in seconds
+                version:
+                  type: string
+                  example: "1.0.0"
+
+info:
+  get:
+    tags:
+      - Health
+    summary: API information
+    description: Get API version and feature information
+    operationId: getApiInfo
+    responses:
+      '200':
+        description: API information
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  example: "hire4recruit API v1.0"
+                status:
+                  type: string
+                  example: "active"
+                timestamp:
+                  type: string
+                  format: date-time
+                features:
+                  type: array
+                  items:
+                    type: string
+                  example:
+                    - "Multi-tenant recruitment management"
+                    - "AI-powered resume parsing"
+                    - "Intelligent candidate matching"
+                    - "Automated interview scheduling"
+                    - "Gemini AI integration"

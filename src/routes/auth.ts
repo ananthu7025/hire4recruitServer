@@ -97,4 +97,13 @@ router.get("/permissions", AuthMiddleware.authenticate, (req, res) => {
   });
 });
 
+// Subscription and payment routes
+router.get("/subscription-plans", AuthController.getSubscriptionPlans);
+
+router.post(
+  "/verify-payment",
+  ValidationMiddleware.sanitizeInput,
+  AuthController.verifyPayment
+);
+
 export default router;

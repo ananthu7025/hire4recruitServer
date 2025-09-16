@@ -1,0 +1,105 @@
+# Candidates endpoints placeholder
+
+candidates:
+  get:
+    tags:
+      - Candidates
+    summary: Get all candidates
+    description: Get all candidates with pagination and filtering
+    operationId: getCandidates
+    security:
+      - BearerAuth: []
+    parameters:
+      - $ref: '../components/index.yaml#/parameters/PageParam'
+      - $ref: '../components/index.yaml#/parameters/LimitParam'
+      - name: status
+        in: query
+        description: Candidate status filter
+        schema:
+          type: string
+          enum: [new, screening, interview_scheduled, interviewed, offer_made, hired, rejected]
+    responses:
+      '200':
+        description: Candidates retrieved successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        candidates:
+                          type: array
+                          items:
+                            $ref: '../components/index.yaml#/schemas/Candidate'
+                        pagination:
+                          $ref: '../components/index.yaml#/schemas/PaginationMeta'
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+  post:
+    tags:
+      - Candidates
+    summary: Create candidate
+    description: Create a new candidate with optional resume upload
+    operationId: createCandidate
+    security:
+      - BearerAuth: []
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            properties:
+              firstName:
+                type: string
+              lastName:
+                type: string
+              email:
+                type: string
+                format: email
+              phone:
+                type: string
+              location:
+                type: string
+              skills:
+                type: string
+                description: JSON array of skills
+              experience:
+                type: integer
+              availability:
+                type: string
+                enum: [available, not_available, available_soon]
+              resume:
+                type: string
+                format: binary
+            required:
+              - firstName
+              - lastName
+              - email
+    responses:
+      '201':
+        description: Candidate created successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/index.yaml#/schemas/Candidate'
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '400':
+        $ref: '../components/index.yaml#/responses/ValidationError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+# Additional endpoints would be defined here for other candidate operations

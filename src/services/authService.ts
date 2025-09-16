@@ -10,6 +10,7 @@ export interface RegisterCompanyData {
   domain?: string;
   industry?: string;
   size: 'startup' | 'small' | 'medium' | 'large' | 'enterprise';
+  subscription: any; // Subscription configuration from PaymentService
   adminFirstName: string;
   adminLastName: string;
   adminEmail: string;
@@ -94,14 +95,7 @@ export class AuthService {
           email: data.adminEmail,
           phone: data.adminPhone
         },
-        subscription: {
-          plan: 'free' as const,
-          status: 'active' as const,
-          startDate: new Date(),
-          maxUsers: 5,
-          maxJobs: 10,
-          features: ['basic_posting', 'candidate_management', 'basic_analytics']
-        }
+        subscription: data.subscription
       };
 
       const [company] = await Company.create([companyData], { session });
@@ -519,6 +513,69 @@ export class AuthService {
 
     } catch (error) {
       logger.error('Password reset failed:', { token, error });
+      throw error;
+    }
+  }
+
+  // Activate subscription after payment verification
+  static async activateSubscription(companyId: string, paymentData: any): Promise<{ company: ICompany; token: string }> {
+    try {
+      // Find company
+      const company = await Company.findById(companyId);
+      if (!company) {
+        throw new Error('Company not found');
+      }
+
+      // Update subscription status and payment info
+      company.subscription.status = 'active';
+      company.subscription.paymentInfo = {
+        ...company.subscription.paymentInfo,
+        razorpayPaymentId: paymentData.razorpayPaymentId,
+        razorpaySignature: paymentData.razorpaySignature,
+        lastPaymentDate: new Date()
+      };
+
+      // Set subscription end date
+      const interval = company.subscription.pricing.interval;
+      const endDate = new Date();
+      if (interval === 'monthly') {
+        endDate.setMonth(endDate.getMonth() + 1);
+      } else {
+        endDate.setFullYear(endDate.getFullYear() + 1);
+      }
+      company.subscription.endDate = endDate;
+
+      await company.save();
+
+      // Find the admin user to generate token
+      const adminUser = await User.findOne({
+        companyId: company._id,
+        role: 'company_admin'
+      });
+
+      if (!adminUser) {
+        throw new Error('Admin user not found');
+      }
+
+      // Generate login token
+      const token = AuthUtils.generateToken({
+        userId: adminUser._id.toString(),
+        companyId: company._id.toString(),
+        email: adminUser.email,
+        role: adminUser.role
+      });
+
+      logger.info('Subscription activated successfully', {
+        companyId: company._id.toString(),
+        plan: company.subscription.plan,
+        amount: company.subscription.pricing.amount,
+        paymentId: paymentData.razorpayPaymentId
+      });
+
+      return { company, token };
+
+    } catch (error) {
+      logger.error('Subscription activation failed:', { companyId, error });
       throw error;
     }
   }

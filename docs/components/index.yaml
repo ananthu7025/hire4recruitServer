@@ -1,0 +1,919 @@
+securitySchemes:
+  BearerAuth:
+    type: http
+    scheme: bearer
+    bearerFormat: JWT
+    description: JWT token for authentication
+
+schemas:
+  # Error responses
+  Error:
+    type: object
+    properties:
+      error:
+        type: string
+        description: Error type
+      message:
+        type: string
+        description: Error message
+    required:
+      - error
+      - message
+
+  SuccessResponse:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: true
+      message:
+        type: string
+      data:
+        type: object
+
+  # Company schemas
+  Company:
+    type: object
+    properties:
+      _id:
+        type: string
+        format: objectId
+        description: Company ID
+      name:
+        type: string
+        description: Company name
+        maxLength: 100
+      domain:
+        type: string
+        description: Company domain
+      industry:
+        type: string
+        description: Company industry
+      size:
+        type: string
+        enum: [startup, small, medium, large, enterprise]
+        description: Company size
+      address:
+        $ref: '#/schemas/Address'
+      phone:
+        type: string
+        description: Company phone number
+      website:
+        type: string
+        format: uri
+        description: Company website
+      settings:
+        $ref: '#/schemas/CompanySettings'
+      subscription:
+        $ref: '#/schemas/Subscription'
+      primaryContact:
+        $ref: '#/schemas/PrimaryContact'
+      isActive:
+        type: boolean
+        description: Whether company is active
+      isVerified:
+        type: boolean
+        description: Whether company is verified
+      createdAt:
+        type: string
+        format: date-time
+      updatedAt:
+        type: string
+        format: date-time
+    required:
+      - name
+      - size
+      - subscription
+      - primaryContact
+
+  Address:
+    type: object
+    properties:
+      street:
+        type: string
+      city:
+        type: string
+      state:
+        type: string
+      country:
+        type: string
+      postalCode:
+        type: string
+
+  CompanySettings:
+    type: object
+    properties:
+      timezone:
+        type: string
+        default: UTC
+      currency:
+        type: string
+        default: USD
+      dateFormat:
+        type: string
+        default: MM/DD/YYYY
+      language:
+        type: string
+        default: en
+
+  Subscription:
+    type: object
+    properties:
+      plan:
+        type: string
+        enum: [basic, professional, enterprise]
+        description: Subscription plan
+      status:
+        type: string
+        enum: [active, inactive, suspended, cancelled, pending_payment]
+        description: Subscription status
+      startDate:
+        type: string
+        format: date-time
+      endDate:
+        type: string
+        format: date-time
+      maxUsers:
+        type: integer
+        description: Maximum users allowed
+      maxJobs:
+        type: integer
+        description: Maximum jobs allowed
+      features:
+        type: array
+        items:
+          type: string
+        description: Available features
+      pricing:
+        $ref: '#/schemas/Pricing'
+      paymentInfo:
+        $ref: '#/schemas/PaymentInfo'
+    required:
+      - plan
+      - maxUsers
+      - maxJobs
+      - pricing
+
+  Pricing:
+    type: object
+    properties:
+      amount:
+        type: number
+        description: Subscription amount
+      currency:
+        type: string
+        default: INR
+      interval:
+        type: string
+        enum: [monthly, annual]
+    required:
+      - amount
+      - interval
+
+  PaymentInfo:
+    type: object
+    properties:
+      razorpayOrderId:
+        type: string
+      razorpayPaymentId:
+        type: string
+      razorpaySignature:
+        type: string
+      lastPaymentDate:
+        type: string
+        format: date-time
+      nextPaymentDate:
+        type: string
+        format: date-time
+
+  PrimaryContact:
+    type: object
+    properties:
+      name:
+        type: string
+      email:
+        type: string
+        format: email
+      phone:
+        type: string
+    required:
+      - name
+      - email
+
+  # User schemas
+  User:
+    type: object
+    properties:
+      _id:
+        type: string
+        format: objectId
+      companyId:
+        type: string
+        format: objectId
+      email:
+        type: string
+        format: email
+      firstName:
+        type: string
+        maxLength: 50
+      lastName:
+        type: string
+        maxLength: 50
+      phone:
+        type: string
+      role:
+        type: string
+        enum: [company_admin, hr_manager, recruiter, interviewer, hiring_manager]
+      department:
+        type: string
+      jobTitle:
+        type: string
+      permissions:
+        $ref: '#/schemas/UserPermissions'
+      isActive:
+        type: boolean
+      isDeleted:
+        type: boolean
+      isEmailVerified:
+        type: boolean
+      preferences:
+        $ref: '#/schemas/UserPreferences'
+      lastLogin:
+        type: string
+        format: date-time
+      createdAt:
+        type: string
+        format: date-time
+      updatedAt:
+        type: string
+        format: date-time
+    required:
+      - companyId
+      - email
+      - firstName
+      - lastName
+      - role
+
+  UserPermissions:
+    type: object
+    properties:
+      users:
+        $ref: '#/schemas/ResourcePermissions'
+      jobs:
+        $ref: '#/schemas/ResourcePermissions'
+      candidates:
+        $ref: '#/schemas/ResourcePermissions'
+      interviews:
+        $ref: '#/schemas/ResourcePermissions'
+      assessments:
+        $ref: '#/schemas/ResourcePermissions'
+      reports:
+        $ref: '#/schemas/ResourcePermissions'
+
+  ResourcePermissions:
+    type: object
+    properties:
+      create:
+        type: boolean
+      read:
+        type: boolean
+      update:
+        type: boolean
+      delete:
+        type: boolean
+
+  UserPreferences:
+    type: object
+    properties:
+      timezone:
+        type: string
+      language:
+        type: string
+      emailNotifications:
+        type: boolean
+      pushNotifications:
+        type: boolean
+
+  # Job schemas
+  Job:
+    type: object
+    properties:
+      _id:
+        type: string
+        format: objectId
+      companyId:
+        type: string
+        format: objectId
+      title:
+        type: string
+        maxLength: 200
+      description:
+        type: string
+      department:
+        type: string
+      location:
+        $ref: '#/schemas/JobLocation'
+      employment:
+        $ref: '#/schemas/Employment'
+      salary:
+        $ref: '#/schemas/Salary'
+      requirements:
+        $ref: '#/schemas/JobRequirements'
+      benefits:
+        type: array
+        items:
+          type: string
+      status:
+        type: string
+        enum: [draft, active, paused, closed]
+        default: draft
+      urgency:
+        type: string
+        enum: [low, medium, high]
+        default: medium
+      hiringManager:
+        type: string
+        format: objectId
+      createdBy:
+        type: string
+        format: objectId
+      updatedBy:
+        type: string
+        format: objectId
+      createdAt:
+        type: string
+        format: date-time
+      updatedAt:
+        type: string
+        format: date-time
+    required:
+      - companyId
+      - title
+      - description
+      - department
+      - location
+      - employment
+
+  JobLocation:
+    type: object
+    properties:
+      type:
+        type: string
+        enum: [remote, onsite, hybrid]
+      city:
+        type: string
+      state:
+        type: string
+      country:
+        type: string
+    required:
+      - type
+
+  Employment:
+    type: object
+    properties:
+      type:
+        type: string
+        enum: [full-time, part-time, contract, internship]
+      level:
+        type: string
+        enum: [entry, junior, mid, senior, lead, principal]
+    required:
+      - type
+      - level
+
+  Salary:
+    type: object
+    properties:
+      min:
+        type: number
+      max:
+        type: number
+      currency:
+        type: string
+        default: USD
+      period:
+        type: string
+        enum: [hourly, daily, monthly, annual]
+        default: annual
+    required:
+      - currency
+      - period
+
+  JobRequirements:
+    type: object
+    properties:
+      experience:
+        type: string
+      education:
+        type: string
+      skills:
+        type: array
+        items:
+          type: string
+      certifications:
+        type: array
+        items:
+          type: string
+
+  # Candidate schemas
+  Candidate:
+    type: object
+    properties:
+      _id:
+        type: string
+        format: objectId
+      companyId:
+        type: string
+        format: objectId
+      firstName:
+        type: string
+      lastName:
+        type: string
+      email:
+        type: string
+        format: email
+      phone:
+        type: string
+      location:
+        $ref: '#/schemas/CandidateLocation'
+      skills:
+        type: array
+        items:
+          type: string
+      experience:
+        type: number
+        description: Years of experience
+      education:
+        type: array
+        items:
+          $ref: '#/schemas/Education'
+      workHistory:
+        type: array
+        items:
+          $ref: '#/schemas/WorkHistory'
+      resume:
+        $ref: '#/schemas/ResumeFile'
+      status:
+        type: string
+        enum: [new, screening, interview_scheduled, interviewed, offer_made, hired, rejected]
+        default: new
+      availability:
+        type: string
+        enum: [available, not_available, available_soon]
+        default: available
+      source:
+        type: string
+        enum: [direct_application, referral, headhunter, social_media, job_board]
+      notes:
+        type: string
+      tags:
+        type: array
+        items:
+          type: string
+      createdBy:
+        type: string
+        format: objectId
+      updatedBy:
+        type: string
+        format: objectId
+      createdAt:
+        type: string
+        format: date-time
+      updatedAt:
+        type: string
+        format: date-time
+    required:
+      - companyId
+      - firstName
+      - lastName
+      - email
+
+  CandidateLocation:
+    type: object
+    properties:
+      city:
+        type: string
+      state:
+        type: string
+      country:
+        type: string
+      isRemote:
+        type: boolean
+        default: false
+
+  Education:
+    type: object
+    properties:
+      degree:
+        type: string
+      field:
+        type: string
+      institution:
+        type: string
+      graduationYear:
+        type: integer
+      gpa:
+        type: number
+
+  WorkHistory:
+    type: object
+    properties:
+      company:
+        type: string
+      position:
+        type: string
+      startDate:
+        type: string
+        format: date
+      endDate:
+        type: string
+        format: date
+      description:
+        type: string
+      isCurrent:
+        type: boolean
+        default: false
+
+  ResumeFile:
+    type: object
+    properties:
+      filename:
+        type: string
+      originalName:
+        type: string
+      mimetype:
+        type: string
+      size:
+        type: integer
+      uploadDate:
+        type: string
+        format: date-time
+      parsedData:
+        type: object
+
+  # Interview schemas
+  Interview:
+    type: object
+    properties:
+      _id:
+        type: string
+        format: objectId
+      companyId:
+        type: string
+        format: objectId
+      candidateId:
+        type: string
+        format: objectId
+      jobId:
+        type: string
+        format: objectId
+      type:
+        type: string
+        enum: [phone_screening, video_call, in_person, technical, behavioral, panel]
+      format:
+        type: string
+        enum: [phone_call, video_call, in_person]
+      status:
+        type: string
+        enum: [scheduled, in_progress, completed, cancelled, no_show]
+        default: scheduled
+      scheduledAt:
+        type: string
+        format: date-time
+      duration:
+        type: integer
+        description: Duration in minutes
+      interviewers:
+        type: array
+        items:
+          type: string
+          format: objectId
+      location:
+        $ref: '#/schemas/InterviewLocation'
+      notes:
+        type: string
+      feedback:
+        type: array
+        items:
+          $ref: '#/schemas/InterviewFeedback'
+      createdBy:
+        type: string
+        format: objectId
+      updatedBy:
+        type: string
+        format: objectId
+      createdAt:
+        type: string
+        format: date-time
+      updatedAt:
+        type: string
+        format: date-time
+    required:
+      - companyId
+      - candidateId
+      - jobId
+      - type
+      - format
+      - scheduledAt
+      - duration
+      - interviewers
+
+  InterviewLocation:
+    type: object
+    properties:
+      type:
+        type: string
+        enum: [virtual, physical]
+      platform:
+        type: string
+        description: Platform for virtual interviews (zoom, teams, etc.)
+      meetingUrl:
+        type: string
+        format: uri
+      address:
+        type: string
+      room:
+        type: string
+
+  InterviewFeedback:
+    type: object
+    properties:
+      interviewerId:
+        type: string
+        format: objectId
+      rating:
+        type: integer
+        minimum: 1
+        maximum: 5
+      feedback:
+        type: string
+      recommendation:
+        type: string
+        enum: [hire, maybe, no_hire]
+      strengths:
+        type: array
+        items:
+          type: string
+      weaknesses:
+        type: array
+        items:
+          type: string
+      notes:
+        type: string
+      submittedAt:
+        type: string
+        format: date-time
+
+  # Assessment schemas
+  Assessment:
+    type: object
+    properties:
+      _id:
+        type: string
+        format: objectId
+      companyId:
+        type: string
+        format: objectId
+      title:
+        type: string
+      description:
+        type: string
+      type:
+        type: string
+        enum: [technical, behavioral, cognitive, personality]
+      jobId:
+        type: string
+        format: objectId
+      timeLimit:
+        type: integer
+        description: Time limit in minutes
+      passingScore:
+        type: number
+        minimum: 0
+        maximum: 100
+      questions:
+        type: array
+        items:
+          $ref: '#/schemas/AssessmentQuestion'
+      instructions:
+        type: string
+      isActive:
+        type: boolean
+        default: true
+      createdBy:
+        type: string
+        format: objectId
+      updatedBy:
+        type: string
+        format: objectId
+      createdAt:
+        type: string
+        format: date-time
+      updatedAt:
+        type: string
+        format: date-time
+    required:
+      - companyId
+      - title
+      - type
+      - timeLimit
+      - passingScore
+      - questions
+
+  AssessmentQuestion:
+    type: object
+    properties:
+      type:
+        type: string
+        enum: [multiple_choice, coding, essay, true_false]
+      question:
+        type: string
+      options:
+        type: array
+        items:
+          type: string
+      correctAnswer:
+        oneOf:
+          - type: integer
+          - type: string
+      points:
+        type: number
+      timeLimit:
+        type: integer
+        description: Time limit for this question in minutes
+      expectedOutput:
+        type: string
+        description: Expected output for coding questions
+
+  # Subscription Plan schemas
+  SubscriptionPlan:
+    type: object
+    properties:
+      name:
+        type: string
+      features:
+        type: array
+        items:
+          type: string
+      maxUsers:
+        type: integer
+      maxJobs:
+        type: integer
+      pricing:
+        type: object
+        properties:
+          monthly:
+            type: number
+          annual:
+            type: number
+
+  # Payment schemas
+  PaymentOrder:
+    type: object
+    properties:
+      orderId:
+        type: string
+      amount:
+        type: number
+      currency:
+        type: string
+      key:
+        type: string
+        description: Razorpay key ID
+
+  # Pagination schemas
+  PaginationMeta:
+    type: object
+    properties:
+      page:
+        type: integer
+        minimum: 1
+      limit:
+        type: integer
+        minimum: 1
+        maximum: 100
+      total:
+        type: integer
+      pages:
+        type: integer
+      hasNext:
+        type: boolean
+      hasPrev:
+        type: boolean
+
+parameters:
+  PageParam:
+    name: page
+    in: query
+    description: Page number
+    schema:
+      type: integer
+      minimum: 1
+      default: 1
+
+  LimitParam:
+    name: limit
+    in: query
+    description: Number of items per page
+    schema:
+      type: integer
+      minimum: 1
+      maximum: 100
+      default: 10
+
+  UserIdParam:
+    name: userId
+    in: path
+    required: true
+    description: User ID
+    schema:
+      type: string
+      format: objectId
+
+  JobIdParam:
+    name: jobId
+    in: path
+    required: true
+    description: Job ID
+    schema:
+      type: string
+      format: objectId
+
+  CandidateIdParam:
+    name: candidateId
+    in: path
+    required: true
+    description: Candidate ID
+    schema:
+      type: string
+      format: objectId
+
+  InterviewIdParam:
+    name: interviewId
+    in: path
+    required: true
+    description: Interview ID
+    schema:
+      type: string
+      format: objectId
+
+  AssessmentIdParam:
+    name: assessmentId
+    in: path
+    required: true
+    description: Assessment ID
+    schema:
+      type: string
+      format: objectId
+
+responses:
+  UnauthorizedError:
+    description: Authentication information is missing or invalid
+    content:
+      application/json:
+        schema:
+          $ref: '#/schemas/Error'
+        example:
+          error: "Access denied"
+          message: "No token provided"
+
+  ForbiddenError:
+    description: Access forbidden
+    content:
+      application/json:
+        schema:
+          $ref: '#/schemas/Error'
+        example:
+          error: "Forbidden"
+          message: "Insufficient permissions"
+
+  NotFoundError:
+    description: Resource not found
+    content:
+      application/json:
+        schema:
+          $ref: '#/schemas/Error'
+        example:
+          error: "Not found"
+          message: "Resource not found"
+
+  ValidationError:
+    description: Validation error
+    content:
+      application/json:
+        schema:
+          $ref: '#/schemas/Error'
+        example:
+          error: "Validation failed"
+          message: "Invalid input data"
+
+  InternalServerError:
+    description: Internal server error
+    content:
+      application/json:
+        schema:
+          $ref: '#/schemas/Error'
+        example:
+          error: "Internal server error"
+          message: "Something went wrong"

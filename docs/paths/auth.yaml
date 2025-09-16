@@ -1,0 +1,658 @@
+register-company:
+  post:
+    tags:
+      - Authentication
+    summary: Register new company
+    description: Register a new company with admin user and subscription plan
+    operationId: registerCompany
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              companyName:
+                type: string
+                minLength: 2
+                maxLength: 100
+                example: "Tech Solutions Inc"
+              domain:
+                type: string
+                pattern: '^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9](?:\.[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9])*$'
+                example: "techsolutions.com"
+              industry:
+                type: string
+                example: "Technology"
+              size:
+                type: string
+                enum: [startup, small, medium, large, enterprise]
+                example: "medium"
+              subscription:
+                type: object
+                properties:
+                  plan:
+                    type: string
+                    enum: [basic, professional, enterprise]
+                    example: "professional"
+                  interval:
+                    type: string
+                    enum: [monthly, annual]
+                    example: "annual"
+                required:
+                  - plan
+                  - interval
+              adminFirstName:
+                type: string
+                minLength: 2
+                maxLength: 50
+                example: "John"
+              adminLastName:
+                type: string
+                minLength: 2
+                maxLength: 50
+                example: "Doe"
+              adminEmail:
+                type: string
+                format: email
+                example: "admin@techsolutions.com"
+              adminPassword:
+                type: string
+                minLength: 8
+                pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])'
+                example: "SecurePass123!"
+              adminPhone:
+                type: string
+                example: "+1234567890"
+              address:
+                $ref: '../components/index.yaml#/schemas/Address'
+              phone:
+                type: string
+                example: "+1234567890"
+              website:
+                type: string
+                format: uri
+                example: "https://techsolutions.com"
+            required:
+              - companyName
+              - size
+              - subscription
+              - adminFirstName
+              - adminLastName
+              - adminEmail
+              - adminPassword
+    responses:
+      '201':
+        description: Company registration initiated
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        company:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                            name:
+                              type: string
+                            subscription:
+                              type: object
+                              properties:
+                                plan:
+                                  type: string
+                                status:
+                                  type: string
+                                pricing:
+                                  $ref: '../components/index.yaml#/schemas/Pricing'
+                        adminUser:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                            email:
+                              type: string
+                            firstName:
+                              type: string
+                            lastName:
+                              type: string
+                            role:
+                              type: string
+                        payment:
+                          $ref: '../components/index.yaml#/schemas/PaymentOrder'
+                        subscriptionPlan:
+                          $ref: '../components/index.yaml#/schemas/SubscriptionPlan'
+      '409':
+        $ref: '../components/index.yaml#/responses/ValidationError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+login:
+  post:
+    tags:
+      - Authentication
+    summary: User login
+    description: Authenticate user and get access token
+    operationId: login
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              email:
+                type: string
+                format: email
+                example: "admin@techsolutions.com"
+              password:
+                type: string
+                example: "SecurePass123!"
+              rememberMe:
+                type: boolean
+                default: false
+            required:
+              - email
+              - password
+    responses:
+      '200':
+        description: Login successful
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        user:
+                          $ref: '../components/index.yaml#/schemas/User'
+                        company:
+                          $ref: '../components/index.yaml#/schemas/Company'
+                        token:
+                          type: string
+                          description: JWT access token
+                        expiresIn:
+                          type: string
+                          example: "7d"
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '423':
+        description: Account locked
+        content:
+          application/json:
+            schema:
+              $ref: '../components/index.yaml#/schemas/Error'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+logout:
+  post:
+    tags:
+      - Authentication
+    summary: User logout
+    description: Logout current user
+    operationId: logout
+    security:
+      - BearerAuth: []
+    responses:
+      '200':
+        description: Logout successful
+        content:
+          application/json:
+            schema:
+              $ref: '../components/index.yaml#/schemas/SuccessResponse'
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+profile:
+  get:
+    tags:
+      - Authentication
+    summary: Get user profile
+    description: Get current authenticated user's profile
+    operationId: getUserProfile
+    security:
+      - BearerAuth: []
+    responses:
+      '200':
+        description: User profile retrieved successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        user:
+                          $ref: '../components/index.yaml#/schemas/User'
+                        company:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+invite-user:
+  post:
+    tags:
+      - Authentication
+    summary: Invite user to company
+    description: Send invitation to join company
+    operationId: inviteUser
+    security:
+      - BearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              email:
+                type: string
+                format: email
+                example: "recruiter@techsolutions.com"
+              firstName:
+                type: string
+                minLength: 2
+                maxLength: 50
+                example: "Jane"
+              lastName:
+                type: string
+                minLength: 2
+                maxLength: 50
+                example: "Smith"
+              role:
+                type: string
+                enum: [hr_manager, recruiter, interviewer, hiring_manager]
+                example: "recruiter"
+              department:
+                type: string
+                example: "HR"
+              jobTitle:
+                type: string
+                example: "Senior Recruiter"
+              phone:
+                type: string
+                example: "+1234567891"
+            required:
+              - email
+              - firstName
+              - lastName
+              - role
+    responses:
+      '201':
+        description: User invitation sent successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        invitedUser:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                            email:
+                              type: string
+                            firstName:
+                              type: string
+                            lastName:
+                              type: string
+                            role:
+                              type: string
+                            invitedAt:
+                              type: string
+                              format: date-time
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '403':
+        $ref: '../components/index.yaml#/responses/ForbiddenError'
+      '409':
+        $ref: '../components/index.yaml#/responses/ValidationError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+accept-invitation:
+  post:
+    tags:
+      - Authentication
+    summary: Accept user invitation
+    description: Accept invitation and set password
+    operationId: acceptInvitation
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              token:
+                type: string
+                description: Invitation token
+              password:
+                type: string
+                minLength: 8
+                pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])'
+              confirmPassword:
+                type: string
+            required:
+              - token
+              - password
+              - confirmPassword
+    responses:
+      '200':
+        description: Invitation accepted successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        user:
+                          $ref: '../components/index.yaml#/schemas/User'
+                        company:
+                          $ref: '../components/index.yaml#/schemas/Company'
+                        token:
+                          type: string
+                        expiresIn:
+                          type: string
+      '400':
+        $ref: '../components/index.yaml#/responses/ValidationError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+change-password:
+  post:
+    tags:
+      - Authentication
+    summary: Change password
+    description: Change current user password
+    operationId: changePassword
+    security:
+      - BearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              currentPassword:
+                type: string
+              newPassword:
+                type: string
+                minLength: 8
+                pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])'
+              confirmPassword:
+                type: string
+            required:
+              - currentPassword
+              - newPassword
+              - confirmPassword
+    responses:
+      '200':
+        description: Password changed successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../components/index.yaml#/schemas/SuccessResponse'
+      '400':
+        $ref: '../components/index.yaml#/responses/ValidationError'
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+forgot-password:
+  post:
+    tags:
+      - Authentication
+    summary: Request password reset
+    description: Request password reset email
+    operationId: forgotPassword
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              email:
+                type: string
+                format: email
+            required:
+              - email
+    responses:
+      '200':
+        description: Password reset email sent (if account exists)
+        content:
+          application/json:
+            schema:
+              $ref: '../components/index.yaml#/schemas/SuccessResponse'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+reset-password:
+  post:
+    tags:
+      - Authentication
+    summary: Reset password
+    description: Reset password using reset token
+    operationId: resetPassword
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              token:
+                type: string
+                description: Password reset token
+              password:
+                type: string
+                minLength: 8
+                pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])'
+              confirmPassword:
+                type: string
+            required:
+              - token
+              - password
+              - confirmPassword
+    responses:
+      '200':
+        description: Password reset successful
+        content:
+          application/json:
+            schema:
+              $ref: '../components/index.yaml#/schemas/SuccessResponse'
+      '400':
+        $ref: '../components/index.yaml#/responses/ValidationError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+verify-token:
+  get:
+    tags:
+      - Authentication
+    summary: Verify authentication token
+    description: Verify if authentication token is valid
+    operationId: verifyToken
+    security:
+      - BearerAuth: []
+    responses:
+      '200':
+        description: Token is valid
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        user:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                            email:
+                              type: string
+                            role:
+                              type: string
+                            companyId:
+                              type: string
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+
+permissions:
+  get:
+    tags:
+      - Authentication
+    summary: Get user permissions
+    description: Get current user's permissions and role
+    operationId: getUserPermissions
+    security:
+      - BearerAuth: []
+    responses:
+      '200':
+        description: User permissions retrieved successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        permissions:
+                          $ref: '../components/index.yaml#/schemas/UserPermissions'
+                        role:
+                          type: string
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+
+subscription-plans:
+  get:
+    tags:
+      - Authentication
+    summary: Get subscription plans
+    description: Get available subscription plans with pricing
+    operationId: getSubscriptionPlans
+    responses:
+      '200':
+        description: Subscription plans retrieved successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        plans:
+                          type: object
+                          additionalProperties:
+                            $ref: '../components/index.yaml#/schemas/SubscriptionPlan'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+verify-payment:
+  post:
+    tags:
+      - Authentication
+    summary: Verify payment and activate subscription
+    description: Verify Razorpay payment and activate company subscription
+    operationId: verifyPayment
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              razorpayOrderId:
+                type: string
+                description: Razorpay order ID
+              razorpayPaymentId:
+                type: string
+                description: Razorpay payment ID
+              razorpaySignature:
+                type: string
+                description: Razorpay signature for verification
+              companyId:
+                type: string
+                description: Company ID to activate
+            required:
+              - razorpayOrderId
+              - razorpayPaymentId
+              - razorpaySignature
+              - companyId
+    responses:
+      '200':
+        description: Payment verified and subscription activated
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        company:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                            name:
+                              type: string
+                            subscription:
+                              $ref: '../components/index.yaml#/schemas/Subscription'
+                        token:
+                          type: string
+                        expiresIn:
+                          type: string
+      '400':
+        description: Payment verification failed
+        content:
+          application/json:
+            schema:
+              $ref: '../components/index.yaml#/schemas/Error'
+      '404':
+        $ref: '../components/index.yaml#/responses/NotFoundError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'

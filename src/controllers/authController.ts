@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { AuthService } from '../services/authService';
+import { PaymentService } from '../services/paymentService';
 import { logger } from '../config/logger';
 
 export class AuthController {
@@ -11,6 +12,7 @@ export class AuthController {
         domain,
         industry,
         size,
+        subscription,
         adminFirstName,
         adminLastName,
         adminEmail,
@@ -21,11 +23,39 @@ export class AuthController {
         website
       } = req.body;
 
+      // Calculate pricing and create payment order
+      const subscriptionConfig = PaymentService.generateSubscriptionConfig(
+        subscription.plan,
+        subscription.interval
+      );
+
+      const amount = PaymentService.calculatePricing(subscription.plan, subscription.interval);
+
+      let paymentOrder;
+
+      // Check if Razorpay is configured
+     
+        // Create actual Razorpay order
+        paymentOrder = await PaymentService.createOrder({
+          amount,
+          currency: 'INR',
+          companyName,
+          plan: subscription.plan,
+          interval: subscription.interval
+        });
+
       const result = await AuthService.registerCompany({
         companyName,
         domain,
         industry,
         size,
+        subscription: {
+          ...subscriptionConfig,
+          paymentInfo: {
+            razorpayOrderId: paymentOrder.id,
+            nextPaymentDate: subscriptionConfig.paymentInfo.nextPaymentDate
+          }
+        },
         adminFirstName,
         adminLastName,
         adminEmail,
@@ -38,14 +68,19 @@ export class AuthController {
 
       res.status(201).json({
         success: true,
-        message: 'Company registered successfully. Please check your email to verify your account.',
+        message: 'Company registration initiated. Please complete the payment to activate your account.',
         data: {
           company: {
             id: result.company._id,
             name: result.company.name,
             domain: result.company.domain,
             industry: result.company.industry,
-            size: result.company.size
+            size: result.company.size,
+            subscription: {
+              plan: result.company.subscription.plan,
+              status: result.company.subscription.status,
+              pricing: result.company.subscription.pricing
+            }
           },
           adminUser: {
             id: result.user._id,
@@ -53,7 +88,14 @@ export class AuthController {
             firstName: result.user.firstName,
             lastName: result.user.lastName,
             role: result.user.role
-          }
+          },
+          payment: {
+            orderId: paymentOrder.id,
+            amount: paymentOrder.amount,
+            currency: paymentOrder.currency,
+            key: process.env.RAZORPAY_KEY_ID
+          },
+          subscriptionPlan: PaymentService.getSubscriptionPlan(subscription.plan)
         }
       });
 
@@ -408,6 +450,121 @@ export class AuthController {
       res.status(500).json({
         error: 'Password reset failed',
         message: 'An error occurred while resetting the password'
+      });
+    }
+  }
+
+  // Get subscription plans
+  static async getSubscriptionPlans(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const plans = PaymentService.getAllPlans();
+
+      res.status(200).json({
+        success: true,
+        data: {
+          plans
+        }
+      });
+
+    } catch (error) {
+      logger.error('Get subscription plans error:', error);
+
+      res.status(500).json({
+        error: 'Failed to retrieve plans',
+        message: 'An error occurred while fetching subscription plans'
+      });
+    }
+  }
+
+  // Verify payment and activate subscription
+  static async verifyPayment(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { razorpayOrderId, razorpayPaymentId, razorpaySignature, companyId } = req.body;
+
+      let paymentDetails;
+
+      // Check if this is a development environment without Razorpay
+      if (!PaymentService.isConfigured() && razorpayOrderId.startsWith('order_mock_')) {
+        console.warn('⚠️  Development mode: Skipping Razorpay verification for mock order');
+
+        // Mock payment details for development
+        paymentDetails = {
+          id: razorpayPaymentId,
+          order_id: razorpayOrderId,
+          status: 'captured',
+          amount: 1000, // Mock amount
+          currency: 'INR',
+          method: 'card'
+        };
+      } else {
+        // Production flow with actual Razorpay verification
+        const isSignatureValid = PaymentService.verifyPaymentSignature({
+          razorpayOrderId,
+          razorpayPaymentId,
+          razorpaySignature
+        });
+
+        if (!isSignatureValid) {
+          res.status(400).json({
+            error: 'Payment verification failed',
+            message: 'Invalid payment signature'
+          });
+          return;
+        }
+
+        // Get payment details from Razorpay
+        paymentDetails = await PaymentService.getPaymentDetails(razorpayPaymentId);
+
+        if (paymentDetails.status !== 'captured') {
+          res.status(400).json({
+            error: 'Payment not completed',
+            message: 'Payment was not successfully captured'
+          });
+          return;
+        }
+      }
+
+      // Update company subscription status
+      const result = await AuthService.activateSubscription(companyId, {
+        razorpayOrderId,
+        razorpayPaymentId,
+        razorpaySignature,
+        paymentDetails
+      });
+
+      res.status(200).json({
+        success: true,
+        message: 'Payment verified successfully. Your subscription is now active!',
+        data: {
+          company: {
+            id: result.company._id,
+            name: result.company.name,
+            subscription: {
+              plan: result.company.subscription.plan,
+              status: result.company.subscription.status,
+              pricing: result.company.subscription.pricing,
+              features: result.company.subscription.features
+            }
+          },
+          token: result.token,
+          expiresIn: '7d'
+        }
+      });
+
+    } catch (error) {
+      logger.error('Payment verification error:', error);
+
+      if (error instanceof Error && error.message.includes('Company not found')) {
+        res.status(404).json({
+          error: 'Company not found',
+          message: error.message
+        });
+        return;
+      }
+
+      res.status(500).json({
+        error: 'Payment verification failed',
+        message: 'An error occurred while verifying the payment'
       });
     }
   }

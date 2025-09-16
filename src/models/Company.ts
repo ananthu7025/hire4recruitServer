@@ -25,13 +25,25 @@ export interface ICompany extends Document {
   };
 
   subscription: {
-    plan: 'free' | 'basic' | 'professional' | 'enterprise';
-    status: 'active' | 'inactive' | 'suspended' | 'cancelled';
+    plan: 'basic' | 'professional' | 'enterprise';
+    status: 'active' | 'inactive' | 'suspended' | 'cancelled' | 'pending_payment';
     startDate: Date;
     endDate?: Date;
     maxUsers: number;
     maxJobs: number;
     features: string[];
+    pricing: {
+      amount: number;
+      currency: string;
+      interval: 'monthly' | 'annual';
+    };
+    paymentInfo?: {
+      razorpayOrderId?: string;
+      razorpayPaymentId?: string;
+      razorpaySignature?: string;
+      lastPaymentDate?: Date;
+      nextPaymentDate?: Date;
+    };
   };
 
   primaryContact: {
@@ -107,13 +119,13 @@ const CompanySchema: Schema = new Schema({
   subscription: {
     plan: {
       type: String,
-      enum: ['free', 'basic', 'professional', 'enterprise'],
-      default: 'free'
+      enum: ['basic', 'professional', 'enterprise'],
+      required: true
     },
     status: {
       type: String,
-      enum: ['active', 'inactive', 'suspended', 'cancelled'],
-      default: 'active'
+      enum: ['active', 'inactive', 'suspended', 'cancelled', 'pending_payment'],
+      default: 'pending_payment'
     },
     startDate: {
       type: Date,
@@ -124,15 +136,37 @@ const CompanySchema: Schema = new Schema({
     },
     maxUsers: {
       type: Number,
-      default: 5
+      required: true
     },
     maxJobs: {
       type: Number,
-      default: 10
+      required: true
     },
     features: [{
       type: String
-    }]
+    }],
+    pricing: {
+      amount: {
+        type: Number,
+        required: true
+      },
+      currency: {
+        type: String,
+        default: 'INR'
+      },
+      interval: {
+        type: String,
+        enum: ['monthly', 'annual'],
+        required: true
+      }
+    },
+    paymentInfo: {
+      razorpayOrderId: String,
+      razorpayPaymentId: String,
+      razorpaySignature: String,
+      lastPaymentDate: Date,
+      nextPaymentDate: Date
+    }
   },
 
   primaryContact: {

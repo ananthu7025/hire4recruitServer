@@ -1,0 +1,207 @@
+openapi: 3.0.3
+info:
+  title: hire4recruit API
+  description: |
+    hire4recruit is a comprehensive recruitment management system that helps organizations streamline their hiring process.
+    This API provides endpoints for managing companies, users, jobs, candidates, interviews, and assessments with AI-powered features.
+
+    ## Features
+    - Multi-tenant recruitment management
+    - AI-powered resume parsing and candidate matching
+    - Intelligent interview scheduling
+    - Advanced analytics and reporting
+    - Razorpay payment integration for subscriptions
+    - Role-based permissions and security
+
+    ## Authentication
+    This API uses Bearer token authentication. Include the token in the Authorization header:
+    ```
+    Authorization: Bearer <your-token>
+    ```
+
+    ## Subscription Plans
+    - **Basic**: ₹999/month - 10 users, 25 jobs
+    - **Professional**: ₹2999/month - 50 users, 100 jobs, AI features
+    - **Enterprise**: ₹9999/month - Unlimited users/jobs, full features
+  version: 1.0.0
+  contact:
+    name: hire4recruit API Support
+    email: support@hire4recruit.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3000/api/v1
+    description: Local development server
+  - url: https://api.hire4recruit.com/v1
+    description: Production server
+
+tags:
+  - name: Health
+    description: Health check endpoints
+  - name: Authentication
+    description: User authentication and authorization
+  - name: Companies
+    description: Company management
+  - name: Users
+    description: User management
+  - name: Jobs
+    description: Job posting and management
+  - name: Candidates
+    description: Candidate management
+  - name: Interviews
+    description: Interview scheduling and management
+  - name: Assessments
+    description: Assessment creation and management
+
+paths:
+  # Health endpoints
+  /health:
+    $ref: './paths/health.yaml#/health'
+  /:
+    $ref: './paths/health.yaml#/info'
+
+  # Authentication endpoints
+  /auth/register-company:
+    $ref: './paths/auth.yaml#/register-company'
+  /auth/login:
+    $ref: './paths/auth.yaml#/login'
+  /auth/logout:
+    $ref: './paths/auth.yaml#/logout'
+  /auth/profile:
+    $ref: './paths/auth.yaml#/profile'
+  /auth/invite-user:
+    $ref: './paths/auth.yaml#/invite-user'
+  /auth/accept-invitation:
+    $ref: './paths/auth.yaml#/accept-invitation'
+  /auth/change-password:
+    $ref: './paths/auth.yaml#/change-password'
+  /auth/forgot-password:
+    $ref: './paths/auth.yaml#/forgot-password'
+  /auth/reset-password:
+    $ref: './paths/auth.yaml#/reset-password'
+  /auth/verify-token:
+    $ref: './paths/auth.yaml#/verify-token'
+  /auth/permissions:
+    $ref: './paths/auth.yaml#/permissions'
+  /auth/subscription-plans:
+    $ref: './paths/auth.yaml#/subscription-plans'
+  /auth/verify-payment:
+    $ref: './paths/auth.yaml#/verify-payment'
+
+  # Company endpoints
+  /companies/profile:
+    $ref: './paths/companies.yaml#/profile'
+  /companies/stats:
+    $ref: './paths/companies.yaml#/stats'
+  /companies/users:
+    $ref: './paths/companies.yaml#/users'
+  /companies/subscription:
+    $ref: './paths/companies.yaml#/subscription'
+  /companies/subscription/limits:
+    $ref: './paths/companies.yaml#/subscription-limits'
+  /companies/activity:
+    $ref: './paths/companies.yaml#/activity'
+  /companies/deactivate:
+    $ref: './paths/companies.yaml#/deactivate'
+  /companies/reactivate:
+    $ref: './paths/companies.yaml#/reactivate'
+
+  # User endpoints
+  /users:
+    $ref: './paths/users.yaml#/users'
+  /users/search:
+    $ref: './paths/users.yaml#/search'
+  /users/role/{role}:
+    $ref: './paths/users.yaml#/by-role'
+  /users/{userId}:
+    $ref: './paths/users.yaml#/user-by-id'
+  /users/{userId}/role:
+    $ref: './paths/users.yaml#/update-role'
+  /users/{userId}/activate:
+    $ref: './paths/users.yaml#/activate'
+  /users/{userId}/deactivate:
+    $ref: './paths/users.yaml#/deactivate'
+  /users/{userId}/activity:
+    $ref: './paths/users.yaml#/activity'
+  /users/{userId}/permissions:
+    $ref: './paths/users.yaml#/permissions'
+
+  # Job endpoints
+  /jobs:
+    $ref: './paths/jobs.yaml#/jobs'
+  /jobs/search/skills:
+    $ref: './paths/jobs.yaml#/search-by-skills'
+  /jobs/stats:
+    $ref: './paths/jobs.yaml#/stats'
+  /jobs/{jobId}:
+    $ref: './paths/jobs.yaml#/job-by-id'
+  /jobs/{jobId}/publish:
+    $ref: './paths/jobs.yaml#/publish'
+  /jobs/{jobId}/clone:
+    $ref: './paths/jobs.yaml#/clone'
+  /jobs/{jobId}/analytics:
+    $ref: './paths/jobs.yaml#/analytics'
+  /jobs/{jobId}/applications:
+    $ref: './paths/jobs.yaml#/applications'
+
+  # Candidate endpoints
+  /candidates:
+    $ref: './paths/candidates.yaml#/candidates'
+  /candidates/talent-pool:
+    $ref: './paths/candidates.yaml#/talent-pool'
+  /candidates/search:
+    $ref: './paths/candidates.yaml#/search'
+  /candidates/{candidateId}:
+    $ref: './paths/candidates.yaml#/candidate-by-id'
+  /candidates/{candidateId}/status:
+    $ref: './paths/candidates.yaml#/update-status'
+  /candidates/{candidateId}/resume:
+    $ref: './paths/candidates.yaml#/upload-resume'
+  /candidates/{candidateId}/summary:
+    $ref: './paths/candidates.yaml#/summary'
+  /candidates/{candidateId}/applications:
+    $ref: './paths/candidates.yaml#/applications'
+  /candidates/{candidateId}/applications/{applicationId}:
+    $ref: './paths/candidates.yaml#/update-application'
+
+  # Interview endpoints
+  /interviews:
+    $ref: './paths/interviews.yaml#/interviews'
+  /interviews/{interviewId}:
+    $ref: './paths/interviews.yaml#/interview-by-id'
+  /interviews/{interviewId}/cancel:
+    $ref: './paths/interviews.yaml#/cancel'
+  /interviews/{interviewId}/feedback:
+    $ref: './paths/interviews.yaml#/feedback'
+  /interviews/calendar:
+    $ref: './paths/interviews.yaml#/calendar'
+  /interviews/availability:
+    $ref: './paths/interviews.yaml#/availability'
+  /interviews/analytics:
+    $ref: './paths/interviews.yaml#/analytics'
+
+  # Assessment endpoints
+  /assessments:
+    $ref: './paths/assessments.yaml#/assessments'
+  /assessments/analytics:
+    $ref: './paths/assessments.yaml#/analytics'
+  /assessments/templates:
+    $ref: './paths/assessments.yaml#/templates'
+  /assessments/templates/{templateId}:
+    $ref: './paths/assessments.yaml#/create-from-template'
+  /assessments/{assessmentId}:
+    $ref: './paths/assessments.yaml#/assessment-by-id'
+  /assessments/{assessmentId}/assign:
+    $ref: './paths/assessments.yaml#/assign'
+  /assessments/{assessmentId}/results:
+    $ref: './paths/assessments.yaml#/results'
+  /assessments/{assessmentId}/analytics:
+    $ref: './paths/assessments.yaml#/assessment-analytics'
+
+components:
+  $ref: './components/index.yaml'
+
+security:
+  - BearerAuth: []

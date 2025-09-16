@@ -2,7 +2,6 @@ import { Router } from "express";
 import { JobController } from "../controllers/jobController";
 import { AuthMiddleware } from "../middleware/auth";
 import { ValidationMiddleware } from "../middleware/validation";
-import { SwaggerHelpers } from "../utils/swagger-helpers";
 import {
   createJobSchema,
   updateJobSchema,
@@ -30,7 +29,6 @@ router.get(
 );
 router.get(
   "/",
-  SwaggerHelpers.getAll("Jobs"),
   AuthMiddleware.requirePermission("jobs", "read"),
   ValidationMiddleware.validate(jobQuerySchema),
   JobController.getJobs
@@ -38,7 +36,6 @@ router.get(
 
 router.post(
   "/",
-  SwaggerHelpers.create("Job"),
   AuthMiddleware.requirePermission("jobs", "create"),
   ValidationMiddleware.sanitizeInput,
   ValidationMiddleware.validate(createJobSchema),

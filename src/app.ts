@@ -6,9 +6,8 @@ import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import { connectDatabase } from "./config/database";
 import { logger } from "./config/logger";
-import { setupSwagger } from "./config/swagger";
-import { generateAndMergeSwagger } from "./utils/auto-swagger";
-import { swaggerSpec } from "./config/swagger";
+import { SwaggerConfig } from "./utils/swagger-config";
+
 
 dotenv.config();
 
@@ -111,11 +110,10 @@ app.use("/api/v1/candidates", candidateRoutes);
 app.use("/api/v1/interviews", interviewRoutes);
 app.use("/api/v1/assessments", assessmentRoutes);
 
-// Setup Swagger documentation
-setupSwagger(app);
-
-// Generate and merge auto-documentation
-const mergedSwaggerSpec = generateAndMergeSwagger(app, swaggerSpec);
+// Setup API documentation
+if (process.env.NODE_ENV !== 'production') {
+  SwaggerConfig.setupSwaggerUI(app);
+}
 
 // 404 handler
 app.use((req: Request, res: Response) => {
@@ -125,7 +123,6 @@ app.use((req: Request, res: Response) => {
     availableRoutes: [
       "GET /health",
       "GET /api/v1",
-      "GET /api-docs",
       "Authentication: /api/v1/auth/*",
       "Companies: /api/v1/companies/*",
       "Users: /api/v1/users/*",
@@ -182,9 +179,6 @@ const startServer = async () => {
       console.log(`🚀 Server running on port ${PORT}`);
       console.log(`📊 Health check: http://localhost:${PORT}/health`);
       console.log(`🔗 API base: http://localhost:${PORT}/api/v1`);
-      console.log(`📚 API docs: http://localhost:${PORT}/api-docs`);
-      console.log(`📄 Swagger JSON: http://localhost:${PORT}/swagger.json`);
-      console.log(`🎯 Auto-generated documentation with ${Object.keys(mergedSwaggerSpec.paths).length} endpoints`);
     });
   } catch (error) {
     logger.error("Failed to start server:", error);

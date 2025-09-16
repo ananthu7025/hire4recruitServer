@@ -1,0 +1,111 @@
+# Assessments endpoints placeholder
+
+assessments:
+  get:
+    tags:
+      - Assessments
+    summary: Get all assessments
+    description: Get all assessments with pagination and filtering
+    operationId: getAssessments
+    security:
+      - BearerAuth: []
+    parameters:
+      - $ref: '../components/index.yaml#/parameters/PageParam'
+      - $ref: '../components/index.yaml#/parameters/LimitParam'
+      - name: type
+        in: query
+        description: Assessment type filter
+        schema:
+          type: string
+          enum: [technical, behavioral, cognitive, personality]
+    responses:
+      '200':
+        description: Assessments retrieved successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        assessments:
+                          type: array
+                          items:
+                            $ref: '../components/index.yaml#/schemas/Assessment'
+                        pagination:
+                          $ref: '../components/index.yaml#/schemas/PaginationMeta'
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+  post:
+    tags:
+      - Assessments
+    summary: Create assessment
+    description: Create a new assessment
+    operationId: createAssessment
+    security:
+      - BearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              title:
+                type: string
+              description:
+                type: string
+              type:
+                type: string
+                enum: [technical, behavioral, cognitive, personality]
+              jobId:
+                type: string
+                format: objectId
+              timeLimit:
+                type: integer
+                description: Time limit in minutes
+              passingScore:
+                type: number
+                minimum: 0
+                maximum: 100
+              questions:
+                type: array
+                items:
+                  $ref: '../components/index.yaml#/schemas/AssessmentQuestion'
+              instructions:
+                type: string
+              isActive:
+                type: boolean
+                default: true
+            required:
+              - title
+              - type
+              - timeLimit
+              - passingScore
+              - questions
+    responses:
+      '201':
+        description: Assessment created successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/index.yaml#/schemas/Assessment'
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '400':
+        $ref: '../components/index.yaml#/responses/ValidationError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+# Additional endpoints would be defined here for other assessment operations
