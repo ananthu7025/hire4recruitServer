@@ -270,6 +270,202 @@ schemas:
       reports:
         $ref: '#/schemas/ResourcePermissions'
 
+  # Employee schemas (extends User model)
+  Employee:
+    type: object
+    properties:
+      _id:
+        type: string
+        format: objectId
+        description: Employee ID
+      companyId:
+        type: string
+        format: objectId
+        description: Company ID
+      email:
+        type: string
+        format: email
+        description: Employee email address
+      firstName:
+        type: string
+        maxLength: 50
+        description: First name
+      lastName:
+        type: string
+        maxLength: 50
+        description: Last name
+      phone:
+        type: string
+        description: Phone number
+      avatar:
+        type: string
+        description: Profile avatar URL
+      role:
+        type: string
+        enum: [company_admin, hr_manager, recruiter, interviewer, hiring_manager]
+        description: Employee role
+      permissions:
+        $ref: '#/schemas/EmployeePermissions'
+      department:
+        type: string
+        description: Department name
+      jobTitle:
+        type: string
+        description: Job title
+      employeeId:
+        type: string
+        description: Internal employee ID
+      isActive:
+        type: boolean
+        description: Whether employee is active
+      isDeleted:
+        type: boolean
+        description: Whether employee is deleted
+      isEmailVerified:
+        type: boolean
+        description: Whether email is verified
+      preferences:
+        $ref: '#/schemas/EmployeePreferences'
+      lastLogin:
+        type: string
+        format: date-time
+        description: Last login timestamp
+      failedLoginAttempts:
+        type: integer
+        description: Number of failed login attempts
+      lockoutExpires:
+        type: string
+        format: date-time
+        description: Account lockout expiration
+      invitedBy:
+        type: string
+        format: objectId
+        description: ID of employee who sent invitation
+      invitedAt:
+        type: string
+        format: date-time
+        description: Invitation timestamp
+      inviteAcceptedAt:
+        type: string
+        format: date-time
+        description: Invitation acceptance timestamp
+      createdBy:
+        type: string
+        format: objectId
+        description: ID of employee who created this record
+      updatedBy:
+        type: string
+        format: objectId
+        description: ID of employee who last updated this record
+      createdAt:
+        type: string
+        format: date-time
+      updatedAt:
+        type: string
+        format: date-time
+    required:
+      - companyId
+      - email
+      - firstName
+      - lastName
+      - role
+
+  EmployeePermissions:
+    type: object
+    properties:
+      jobs:
+        $ref: '#/schemas/ResourcePermissions'
+      candidates:
+        $ref: '#/schemas/ResourcePermissions'
+      interviews:
+        $ref: '#/schemas/ResourcePermissions'
+      assessments:
+        $ref: '#/schemas/ResourcePermissions'
+      employees:
+        $ref: '#/schemas/ResourcePermissions'
+      reports:
+        type: object
+        properties:
+          read:
+            type: boolean
+      settings:
+        type: object
+        properties:
+          read:
+            type: boolean
+          update:
+            type: boolean
+
+  EmployeePreferences:
+    type: object
+    properties:
+      timezone:
+        type: string
+        description: Timezone preference
+      language:
+        type: string
+        description: Language preference
+      emailNotifications:
+        type: boolean
+        description: Email notifications enabled
+      pushNotifications:
+        type: boolean
+        description: Push notifications enabled
+
+  EmployeeActivity:
+    type: object
+    properties:
+      lastLogin:
+        type: string
+        format: date-time
+        description: Last login timestamp
+      loginCount:
+        type: integer
+        description: Total number of logins
+      isActive:
+        type: boolean
+        description: Whether employee is active
+      accountAge:
+        type: integer
+        description: Account age in days
+      invitationStatus:
+        type: string
+        enum: [pending, accepted, not_invited]
+        description: Invitation status
+
+  UpdateEmployeeRequest:
+    type: object
+    properties:
+      firstName:
+        type: string
+        maxLength: 50
+      lastName:
+        type: string
+        maxLength: 50
+      phone:
+        type: string
+      department:
+        type: string
+      jobTitle:
+        type: string
+      employeeId:
+        type: string
+      preferences:
+        $ref: '#/schemas/EmployeePreferences'
+
+  UpdateEmployeeRoleRequest:
+    type: object
+    properties:
+      role:
+        type: string
+        enum: [company_admin, hr_manager, recruiter, interviewer, hiring_manager]
+      department:
+        type: string
+      jobTitle:
+        type: string
+    required:
+      - role
+
   ResourcePermissions:
     type: object
     properties:
@@ -863,6 +1059,15 @@ parameters:
     in: path
     required: true
     description: Assessment ID
+    schema:
+      type: string
+      format: objectId
+
+  EmployeeIdParam:
+    name: employeeId
+    in: path
+    required: true
+    description: Employee ID
     schema:
       type: string
       format: objectId

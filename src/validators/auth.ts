@@ -97,18 +97,19 @@ export const loginSchema = z.object({
   })
 });
 
-// Invite user schema
-export const inviteUserSchema = z.object({
+// Invite employee schema
+export const inviteEmployeeSchema = z.object({
   body: z.object({
     email: emailSchema,
     firstName: nameSchema('First name'),
     lastName: nameSchema('Last name'),
-    role: z.enum(['hr_manager', 'recruiter', 'interviewer', 'hiring_manager'], {
-      message: 'Please select a valid role: HR Manager, Recruiter, Interviewer, or Hiring Manager'
+    role: z.enum(['company_admin', 'hr_manager', 'recruiter', 'interviewer', 'hiring_manager'], {
+      message: 'Please select a valid role: Company Admin, HR Manager, Recruiter, Interviewer, or Hiring Manager'
     }),
-    department: z.string().optional(),
-    jobTitle: z.string().optional(),
-    phone: phoneSchema
+    department: z.string().max(100, 'Department name is too long').optional(),
+    jobTitle: z.string().max(100, 'Job title is too long').optional(),
+    phone: phoneSchema,
+    employeeId: z.string().max(50, 'Employee ID is too long').optional()
   })
 });
 

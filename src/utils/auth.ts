@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt, { SignOptions } from 'jsonwebtoken';
 import crypto from 'crypto';
-import { IUser } from '../models/User';
+import { IEmployee } from '../models/Employee';
 
 export interface JwtPayload {
   userId: string;
@@ -51,7 +51,7 @@ export class AuthUtils {
   }
 
   // Generate token for user
-  static generateUserToken(user: IUser): string {
+  static generateUserToken(user: IEmployee): string {
     const payload: JwtPayload = {
       userId: user._id.toString(),
       companyId: user.companyId.toString(),
@@ -113,12 +113,12 @@ export class AuthUtils {
   }
 
   // Check if user is locked out
-  static isUserLockedOut(user: IUser): boolean {
+  static isUserLockedOut(user: IEmployee): boolean {
     return user.lockoutExpires ? user.lockoutExpires > new Date() : false;
   }
 
   // Handle failed login attempt
-  static handleFailedLogin(user: IUser): { isLocked: boolean; attemptsRemaining: number } {
+  static handleFailedLogin(user: IEmployee): { isLocked: boolean; attemptsRemaining: number } {
     const maxAttempts = 5;
     const lockoutDuration = 15 * 60 * 1000; // 15 minutes
 
@@ -136,7 +136,7 @@ export class AuthUtils {
   }
 
   // Reset failed login attempts on successful login
-  static resetFailedLoginAttempts(user: IUser): void {
+  static resetFailedLoginAttempts(user: IEmployee): void {
     user.failedLoginAttempts = 0;
     user.lockoutExpires = undefined;
     user.lastLogin = new Date();
@@ -151,7 +151,7 @@ export class AuthUtils {
   }
 
   // Generate user permissions based on role
-  static generatePermissionsByRole(role: IUser['role']) {
+  static generatePermissionsByRole(role: IEmployee['role']) {
     const permissions = {
       jobs: { create: false, read: false, update: false, delete: false },
       candidates: { create: false, read: false, update: false, delete: false },

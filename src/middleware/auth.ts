@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { AuthUtils, JwtPayload } from '../utils/auth';
-import User, { IUser } from '../models/User';
+import Employee, { IEmployee } from '../models/Employee';
 import { logger } from '../config/logger';
 
 export class AuthMiddleware {
@@ -21,7 +21,7 @@ export class AuthMiddleware {
       const decoded = AuthUtils.verifyToken(token);
 
       // Get user from database to ensure they still exist and are active
-      const user = await User.findById(decoded.userId)
+      const user = await Employee.findById(decoded.userId)
         .select('-password')
         .populate('companyId', 'name isActive')
         .lean();
@@ -53,7 +53,7 @@ export class AuthMiddleware {
       }
 
       // Check if user is locked out
-      if (AuthUtils.isUserLockedOut(user as IUser)) {
+      if (AuthUtils.isUserLockedOut(user as IEmployee)) {
         res.status(423).json({
           error: 'Account locked',
           message: 'Account is temporarily locked due to failed login attempts'
@@ -64,11 +64,11 @@ export class AuthMiddleware {
       // Attach user information to request
       req.user = {
         userId: user._id.toString(),
-        companyId: user.companyId.toString(),
+        companyId: typeof user.companyId === 'object' ? (user.companyId as any)._id.toString() : (user.companyId as any).toString(),
         email: user.email,
         role: user.role,
         permissions: user.permissions,
-        userData: user as IUser
+        userData: user as IEmployee
       };
 
       next();
@@ -109,7 +109,7 @@ export class AuthMiddleware {
   }
 
   // Role-based authorization
-  static requireRole(...roles: IUser['role'][]) {
+  static requireRole(...roles: IEmployee['role'][]) {
     return (req: Request, res: Response, next: NextFunction) => {
       if (!req.user) {
         res.status(401).json({
@@ -119,7 +119,7 @@ export class AuthMiddleware {
         return;
       }
 
-      if (!roles.includes(req.user.role as IUser['role'])) {
+      if (!roles.includes(req.user.role as IEmployee['role'])) {
         res.status(403).json({
           error: 'Forbidden',
           message: 'Insufficient permissions'
@@ -132,7 +132,7 @@ export class AuthMiddleware {
   }
 
   // Permission-based authorization
-  static requirePermission(resource: keyof IUser['permissions'], action: string) {
+  static requirePermission(resource: keyof IEmployee['permissions'], action: string) {
     return (req: Request, res: Response, next: NextFunction) => {
       if (!req.user || !req.user.permissions) {
         res.status(401).json({

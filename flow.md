@@ -4,8 +4,8 @@
 This document outlines the complete user journey and API flow for the hire4recruit recruitment management system, showing how different user personas interact with the system through various endpoints.
 
 ## User Personas
-- **Company Admin**: Full system access, manages company settings, users, and subscriptions
-- **HR Manager**: Manages jobs, candidates, interviews, assessments, and company users
+- **Company Admin**: Full system access, manages company settings, employees, and subscriptions
+- **HR Manager**: Manages jobs, candidates, interviews, assessments, and team members
 - **Recruiter**: Handles candidate sourcing, screening, and initial interviews
 - **Hiring Manager**: Reviews candidates, conducts interviews, makes hiring decisions
 - **Interviewer**: Conducts interviews and provides feedback
@@ -14,7 +14,8 @@ This document outlines the complete user journey and API flow for the hire4recru
 All API endpoints are prefixed with `/api/v1/` and organized by resource:
 - `/api/v1/auth` - Authentication and user management
 - `/api/v1/companies` - Company profile and settings
-- `/api/v1/users` - User management within companies
+- `/api/v1/users` - User management within companies (legacy)
+- `/api/v1/employees` - Employee management and team administration
 - `/api/v1/jobs` - Job posting and management
 - `/api/v1/candidates` - Candidate management and applications
 - `/api/v1/interviews` - Interview scheduling and feedback
@@ -130,7 +131,7 @@ All API endpoints are prefixed with `/api/v1/` and organized by resource:
 
 ---
 
-## 3. Team Setup & User Management Flow
+## 3. Team Setup & Employee Management Flow
 
 ### Story: Company admin invites and manages team members
 
@@ -140,9 +141,11 @@ All API endpoints are prefixed with `/api/v1/` and organized by resource:
    → Admin sees all company team members
    → Includes roles, permissions, and status
 
-2. Invite Team Members
-   POST /api/v1/auth/invite-user
-   → Admin sends invitations with role assignment
+2. Invite Team Members (Employees)
+   POST /api/v1/auth/invite-employee
+   → Admin sends employee invitations with role assignment
+   → Supports all roles including company_admin
+   → Includes employee ID and additional profile information
    → System generates invitation token
    → Invitation email sent with setup link
 
@@ -152,43 +155,115 @@ All API endpoints are prefixed with `/api/v1/` and organized by resource:
    → Returns JWT token for immediate access
    → User gains permissions based on assigned role
 
-4. User Management Operations
-   GET /api/v1/users
-   → List all users with filtering and pagination
+4. Employee Management Operations
+   GET /api/v1/employees
+   → List all employees with filtering and pagination
+   → Supports filtering by role, department, active status
+   → Advanced search by name, email, department, job title
+   → Sortable by multiple fields (firstName, lastName, createdAt, etc.)
 
-   GET /api/v1/users/search
-   → Search users by name, email, or role
+   GET /api/v1/employees/search
+   → Advanced employee search with configurable options
+   → Minimum 2 character search term requirement
+   → Option to exclude specific roles from results
+   → Option to include inactive employees
 
-   GET /api/v1/users/role/{role}
-   → Get users by specific role
+   GET /api/v1/employees/role/{role}
+   → Get all active employees with specific role
+   → Useful for role-based team views and assignments
 
-   GET /api/v1/users/{userId}
-   → Get detailed user information
+   GET /api/v1/employees/{employeeId}
+   → Get detailed employee information
+   → Includes complete profile, permissions, and metadata
+   → Shows invitation history and account status
 
-   PUT /api/v1/users/{userId}
-   → Update user profile (self or with permission)
+   PUT /api/v1/employees/{employeeId}
+   → Update employee profile information
+   → Users can update their own profile
+   → Admins can update any employee profile
+   → Supports updating preferences and personal details
 
-   PUT /api/v1/users/{userId}/role
-   → Update user role (admin/hr_manager only)
+   PUT /api/v1/employees/{employeeId}/role
+   → Update employee role and related information
+   → Automatically updates permissions based on new role
+   → Restricted to company_admin and hr_manager roles
+   → Updates department and job title simultaneously
 
-   GET /api/v1/users/{userId}/permissions
-   → View user permissions
+5. Employee Status Management
+   POST /api/v1/employees/{employeeId}/activate
+   → Reactivate deactivated employee account
+   → Restores access to platform features
+   → Maintains historical data and settings
 
-   PUT /api/v1/users/{userId}/permissions
-   → Update user permissions (company_admin only)
+   POST /api/v1/employees/{employeeId}/deactivate
+   → Temporarily deactivate employee account
+   → Prevents login and platform access
+   → Invalidates refresh tokens for security
+   → Cannot deactivate own account
 
-5. User Status Management
-   POST /api/v1/users/{userId}/activate
-   → Reactivate deactivated user
+   DELETE /api/v1/employees/{employeeId}
+   → Permanently delete employee (soft delete)
+   → Maintains data integrity for historical records
+   → Invalidates all authentication tokens
+   → Cannot delete own account
 
-   POST /api/v1/users/{userId}/deactivate
-   → Temporarily deactivate user
+   GET /api/v1/employees/{employeeId}/activity
+   → View employee activity summary and statistics
+   → Shows last login, account age, login statistics
+   → Displays invitation status and acceptance history
+   → Useful for account management and security monitoring
 
-   DELETE /api/v1/users/{userId}
-   → Permanently delete user (soft delete)
+6. Employee Permissions Management
+   GET /api/v1/employees/{employeeId}/permissions
+   → View detailed employee permissions
+   → Users can view their own permissions
+   → Admins can view any employee permissions
+   → Shows granular resource-level access control
 
-   GET /api/v1/users/{userId}/activity
-   → View user activity logs and statistics
+   PUT /api/v1/employees/{employeeId}/permissions
+   → Update employee permissions (company_admin only)
+   → Override default role-based permissions
+   → Granular control over resource access (CRUD operations)
+   → Supports custom permission configurations
+
+7. Employee Role Hierarchy and Permissions
+   → company_admin: Full system access, manages all employees
+   → hr_manager: Manages team members, jobs, candidates, interviews
+   → recruiter: Handles candidate management and initial screening
+   → interviewer: Conducts interviews and provides feedback
+   → hiring_manager: Reviews candidates and makes hiring decisions
+
+8. Employee Data Model Features
+   → Multi-tenant isolation by company
+   → Role-based permission system with overrides
+   → Comprehensive audit trail (createdBy, updatedBy)
+   → Invitation workflow with token-based activation
+   → Security features (failed login tracking, account lockout)
+   → Flexible preferences system (timezone, notifications)
+   → Department and job title organization
+```
+
+### Legacy User Management (Deprecated)
+
+```
+The /api/v1/users endpoints are maintained for backward compatibility but are
+being phased out in favor of the more comprehensive /api/v1/employees endpoints.
+
+GET /api/v1/users
+GET /api/v1/users/search
+GET /api/v1/users/role/{role}
+GET /api/v1/users/{userId}
+PUT /api/v1/users/{userId}
+PUT /api/v1/users/{userId}/role
+GET /api/v1/users/{userId}/permissions
+PUT /api/v1/users/{userId}/permissions
+POST /api/v1/users/{userId}/activate
+POST /api/v1/users/{userId}/deactivate
+DELETE /api/v1/users/{userId}
+GET /api/v1/users/{userId}/activity
+
+These endpoints have equivalent functionality in the /employees namespace
+with enhanced features and better data models.
 ```
 
 ---
@@ -620,15 +695,28 @@ All API endpoints are prefixed with `/api/v1/` and organized by resource:
 
 ```
 Company
-├── Users (employees)
+├── Employees (team members)
 ├── Jobs
 ├── Subscription details
 └── Company settings
 
-User
+Employee (Enhanced User Model)
+├── Personal Information (name, email, phone, avatar)
 ├── Role (company_admin, hr_manager, recruiter, interviewer, hiring_manager)
-├── Permissions (granular access control)
-└── Profile information
+├── Permissions (granular access control with overrides)
+├── Department and job title
+├── Employee ID and organizational data
+├── Account status (active, deleted, email verified)
+├── Security features (failed logins, lockout)
+├── Invitation workflow (token, invited by, acceptance)
+├── Preferences (timezone, language, notifications)
+├── Audit trail (created by, updated by, timestamps)
+└── Activity tracking (last login, account age)
+
+Legacy User (Deprecated)
+├── Basic role and permissions
+├── Limited profile information
+└── Maintained for backward compatibility
 
 Job
 ├── Job details and requirements

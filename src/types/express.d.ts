@@ -1,4 +1,4 @@
-import { IUser } from '../models/User';
+import { IEmployee } from '../models/Employee';
 
 declare global {
   namespace Express {
@@ -33,7 +33,7 @@ declare global {
             update: boolean;
             delete: boolean;
           };
-          users: {
+          employees: {
             create: boolean;
             read: boolean;
             update: boolean;
@@ -44,7 +44,7 @@ declare global {
             update: boolean;
           };
         };
-        userData?: IUser;
+        userData?: IEmployee;
       };
       validatedData?: {
         body?: any;

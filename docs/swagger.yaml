@@ -47,6 +47,8 @@ tags:
     description: Company management
   - name: Users
     description: User management
+  - name: Employees
+    description: Employee management and team administration
   - name: Jobs
     description: Job posting and management
   - name: Candidates
@@ -72,8 +74,8 @@ paths:
     $ref: './paths/auth.yaml#/logout'
   /auth/profile:
     $ref: './paths/auth.yaml#/profile'
-  /auth/invite-user:
-    $ref: './paths/auth.yaml#/invite-user'
+  /auth/invite-employee:
+    $ref: './paths/auth.yaml#/invite-employee'
   /auth/accept-invitation:
     $ref: './paths/auth.yaml#/accept-invitation'
   /auth/change-password:
@@ -116,6 +118,26 @@ paths:
   # User endpoints
   /users:
     $ref: './paths/users.yaml#/users'
+
+  # Employee endpoints
+  /employees:
+    $ref: './paths/employees.yaml#/employees'
+  /employees/search:
+    $ref: './paths/employees.yaml#/employee-search'
+  /employees/role/{role}:
+    $ref: './paths/employees.yaml#/employees-by-role'
+  /employees/{employeeId}:
+    $ref: './paths/employees.yaml#/employee-by-id'
+  /employees/{employeeId}/role:
+    $ref: './paths/employees.yaml#/employee-role'
+  /employees/{employeeId}/activate:
+    $ref: './paths/employees.yaml#/employee-activate'
+  /employees/{employeeId}/deactivate:
+    $ref: './paths/employees.yaml#/employee-deactivate'
+  /employees/{employeeId}/activity:
+    $ref: './paths/employees.yaml#/employee-activity'
+  /employees/{employeeId}/permissions:
+    $ref: './paths/employees.yaml#/employee-permissions'
 
   # Job endpoints
   /jobs:

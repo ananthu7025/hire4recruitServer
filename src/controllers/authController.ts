@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { AuthService } from '../services/authService';
 import { PaymentService } from '../services/paymentService';
 import { logger } from '../config/logger';
-import User from '../models/User';
+import Employee from '../models/Employee';
 import Company from '../models/Company';
 
 interface AuthRequest extends Request {
@@ -142,7 +142,8 @@ export class AuthController {
             email: result.user.email,
             firstName: result.user.firstName,
             lastName: result.user.lastName,
-            role: result.user.role
+            role: result.user.role,
+            employeeId: result.user.employeeId
           },
           payment: {
             orderId: paymentOrder.id,
@@ -155,7 +156,7 @@ export class AuthController {
       });
 
     } catch (error) {
-      this.handleError(res, error, 'Registration failed', 'An error occurred during company registration');
+      AuthController.handleError(res, error, 'Registration failed', 'An error occurred during company registration');
     }
   }
 
@@ -179,7 +180,7 @@ export class AuthController {
       });
 
     } catch (error) {
-      this.handleError(res, error, 'Login failed', 'An error occurred during login');
+      AuthController.handleError(res, error, 'Login failed', 'An error occurred during login');
     }
   }
 
@@ -198,7 +199,7 @@ export class AuthController {
       });
 
     } catch (error) {
-      this.handleError(res, error, 'Logout failed', 'An error occurred during logout');
+      AuthController.handleError(res, error, 'Logout failed', 'An error occurred during logout');
     }
   }
 
@@ -237,12 +238,12 @@ export class AuthController {
       });
 
     } catch (error) {
-      this.handleError(res, error, 'Failed to get profile', 'An error occurred while fetching user profile');
+      AuthController.handleError(res, error, 'Failed to get profile', 'An error occurred while fetching user profile');
     }
   }
 
-  // Invite user to company
-  static async inviteUser(req: AuthRequest, res: Response): Promise<void> {
+  // Invite employee to company
+  static async inviteEmployee(req: AuthRequest, res: Response): Promise<void> {
     try {
       const { email, firstName, lastName, role, department, jobTitle, phone } = req.body;
 
@@ -254,7 +255,7 @@ export class AuthController {
         return;
       }
 
-      const invitedUser = await AuthService.inviteUser({
+      const invitedEmployee = await AuthService.inviteUser({
         email,
         firstName,
         lastName,
@@ -268,23 +269,25 @@ export class AuthController {
 
       res.status(201).json({
         success: true,
-        message: 'User invitation sent successfully',
+        message: 'Employee invitation sent successfully',
         data: {
-          invitedUser: {
-            id: invitedUser._id,
-            email: invitedUser.email,
-            firstName: invitedUser.firstName,
-            lastName: invitedUser.lastName,
-            role: invitedUser.role,
-            department: invitedUser.department,
-            jobTitle: invitedUser.jobTitle,
-            invitedAt: invitedUser.invitedAt
+          invitedEmployee: {
+            id: invitedEmployee._id,
+            email: invitedEmployee.email,
+            firstName: invitedEmployee.firstName,
+            lastName: invitedEmployee.lastName,
+            role: invitedEmployee.role,
+            department: invitedEmployee.department,
+            jobTitle: invitedEmployee.jobTitle,
+            employeeId: invitedEmployee.employeeId, // This is now auto-generated
+            invitedAt: invitedEmployee.invitedAt,
+            invitedBy: invitedEmployee.invitedBy
           }
         }
       });
 
     } catch (error) {
-      this.handleError(res, error, 'Invitation failed', 'An error occurred while sending the invitation');
+      AuthController.handleError(res, error, 'Employee invitation failed', 'An error occurred while sending the employee invitation');
     }
   }
 
@@ -308,7 +311,7 @@ export class AuthController {
       });
 
     } catch (error) {
-      this.handleError(res, error, 'Invitation acceptance failed', 'An error occurred while accepting the invitation');
+      AuthController.handleError(res, error, 'Invitation acceptance failed', 'An error occurred while accepting the invitation');
     }
   }
 
@@ -333,7 +336,7 @@ export class AuthController {
       });
 
     } catch (error) {
-      this.handleError(res, error, 'Password change failed', 'An error occurred while changing the password');
+      AuthController.handleError(res, error, 'Password change failed', 'An error occurred while changing the password');
     }
   }
 
@@ -351,7 +354,7 @@ export class AuthController {
       });
 
     } catch (error) {
-      this.handleError(res, error, 'Password reset failed', 'An error occurred while processing the password reset request');
+      AuthController.handleError(res, error, 'Password reset failed', 'An error occurred while processing the password reset request');
     }
   }
 
@@ -368,7 +371,7 @@ export class AuthController {
       });
 
     } catch (error) {
-      this.handleError(res, error, 'Password reset failed', 'An error occurred while resetting the password');
+      AuthController.handleError(res, error, 'Password reset failed', 'An error occurred while resetting the password');
     }
   }
 
@@ -385,16 +388,33 @@ export class AuthController {
       });
 
     } catch (error) {
-      this.handleError(res, error, 'Failed to retrieve plans', 'An error occurred while fetching subscription plans');
+      AuthController.handleError(res, error, 'Failed to retrieve plans', 'An error occurred while fetching subscription plans');
     }
   }
 
   // Verify payment and activate subscription
 static async verifyPayment(req: Request, res: Response): Promise<void> {
   try {
-    const { razorpayOrderId, razorpayPaymentId, razorpaySignature, companyId } = req.body;
+    const { razorpayOrderId, razorpayPaymentId, razorpaySignature } = req.body;
 
-    logger.info('Starting payment verification process', { razorpayOrderId, companyId });
+    logger.info('Starting payment verification process', { razorpayOrderId });
+
+    // Find company by Razorpay order ID instead of relying on frontend-provided companyId
+    const company = await Company.findOne({
+      'subscription.paymentInfo.razorpayOrderId': razorpayOrderId
+    });
+
+    if (!company) {
+      logger.error('Company not found for order ID', { razorpayOrderId });
+      res.status(404).json({
+        error: 'Company not found',
+        message: 'No company found for this payment order'
+      });
+      return;
+    }
+
+    const companyId = company._id.toString();
+    logger.info('Found company for payment verification', { companyId, companyName: company.name });
 
     // Verify payment signature
     const isSignatureValid = PaymentService.verifyPaymentSignature({
@@ -404,7 +424,7 @@ static async verifyPayment(req: Request, res: Response): Promise<void> {
     });
 
     if (!isSignatureValid) {
-      logger.error('Invalid payment signature', { razorpayOrderId });
+      logger.error('Invalid payment signature', { razorpayOrderId, companyId });
       res.status(400).json({
         error: 'Payment verification failed',
         message: 'Invalid payment signature'
@@ -415,7 +435,7 @@ static async verifyPayment(req: Request, res: Response): Promise<void> {
     const paymentDetails = await PaymentService.getPaymentDetails(razorpayPaymentId);
 
     if (paymentDetails.status !== 'captured') {
-      logger.error('Payment not captured', { status: paymentDetails.status, razorpayOrderId });
+      logger.error('Payment not captured', { status: paymentDetails.status, razorpayOrderId, companyId });
       res.status(400).json({
         error: 'Payment not completed',
         message: 'Payment was not successfully captured'
@@ -454,7 +474,7 @@ static async verifyPayment(req: Request, res: Response): Promise<void> {
     });
 
   } catch (error) {
-    this.handleError(res, error, 'Payment verification failed', 'An error occurred while verifying the payment');
+    AuthController.handleError(res, error, 'Payment verification failed', 'An error occurred while verifying the payment');
   }
 }
 
@@ -465,7 +485,7 @@ static async verifyPayment(req: Request, res: Response): Promise<void> {
       const { email } = req.body;
 
       // Find user with pending payment
-      const user = await User.findOne({ email, isDeleted: false })
+      const user = await Employee.findOne({ email, isDeleted: false })
         .populate('companyId');
 
       if (!user) {
@@ -536,7 +556,7 @@ static async verifyPayment(req: Request, res: Response): Promise<void> {
       });
 
     } catch (error) {
-      this.handleError(res, error, 'Retry payment failed', 'An error occurred while creating the payment order');
+      AuthController.handleError(res, error, 'Retry payment failed', 'An error occurred while creating the payment order');
     }
   }
 
@@ -561,7 +581,7 @@ static async verifyPayment(req: Request, res: Response): Promise<void> {
       });
 
     } catch (error) {
-      this.handleError(res, error, 'Email verification failed', 'An error occurred while verifying the email');
+      AuthController.handleError(res, error, 'Email verification failed', 'An error occurred while verifying the email');
     }
   }
 }

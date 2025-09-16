@@ -63,9 +63,9 @@ GET /auth/profile
 Authorization: Bearer <token>
 ```
 
-#### Invite User
+#### Invite Employee
 ```http
-POST /auth/invite-user
+POST /auth/invite-employee
 Authorization: Bearer <token>
 Content-Type: application/json
 
@@ -75,7 +75,9 @@ Content-Type: application/json
   "lastName": "Smith",
   "role": "recruiter",
   "department": "HR",
-  "jobTitle": "Senior Recruiter"
+  "jobTitle": "Senior Recruiter",
+  "phone": "+1234567891",
+  "employeeId": "EMP-002"
 }
 ```
 
@@ -238,6 +240,146 @@ Content-Type: application/json
 ```http
 GET /users/search?q=john&limit=20&excludeRoles=company_admin
 Authorization: Bearer <token>
+```
+
+### Employee Routes (`/employees`)
+
+#### Get Employees
+```http
+GET /employees?page=1&limit=10&role=recruiter&department=HR&search=john&isActive=true&sortBy=firstName&sortOrder=asc
+Authorization: Bearer <token>
+```
+
+#### Search Employees
+```http
+GET /employees/search?q=john&limit=20&excludeRoles=company_admin&includeInactive=false
+Authorization: Bearer <token>
+```
+
+#### Get Employees by Role
+```http
+GET /employees/role/recruiter
+Authorization: Bearer <token>
+```
+
+#### Get Employee by ID
+```http
+GET /employees/60f7b3b3b3b3b3b3b3b3b3b3
+Authorization: Bearer <token>
+```
+
+#### Update Employee
+```http
+PUT /employees/60f7b3b3b3b3b3b3b3b3b3b3
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "firstName": "John",
+  "lastName": "Doe",
+  "phone": "+1234567890",
+  "department": "HR",
+  "jobTitle": "Senior Recruiter",
+  "employeeId": "EMP-001",
+  "preferences": {
+    "timezone": "America/New_York",
+    "language": "en",
+    "emailNotifications": true,
+    "pushNotifications": false
+  }
+}
+```
+
+#### Update Employee Role
+```http
+PUT /employees/60f7b3b3b3b3b3b3b3b3b3b3/role
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "role": "hr_manager",
+  "department": "HR",
+  "jobTitle": "HR Manager"
+}
+```
+
+#### Activate Employee
+```http
+POST /employees/60f7b3b3b3b3b3b3b3b3b3b3/activate
+Authorization: Bearer <token>
+```
+
+#### Deactivate Employee
+```http
+POST /employees/60f7b3b3b3b3b3b3b3b3b3b3/deactivate
+Authorization: Bearer <token>
+```
+
+#### Delete Employee
+```http
+DELETE /employees/60f7b3b3b3b3b3b3b3b3b3b3
+Authorization: Bearer <token>
+```
+
+#### Get Employee Activity
+```http
+GET /employees/60f7b3b3b3b3b3b3b3b3b3b3/activity
+Authorization: Bearer <token>
+```
+
+#### Get Employee Permissions
+```http
+GET /employees/60f7b3b3b3b3b3b3b3b3b3b3/permissions
+Authorization: Bearer <token>
+```
+
+#### Update Employee Permissions
+```http
+PUT /employees/60f7b3b3b3b3b3b3b3b3b3b3/permissions
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "permissions": {
+    "jobs": {
+      "create": true,
+      "read": true,
+      "update": true,
+      "delete": false
+    },
+    "candidates": {
+      "create": true,
+      "read": true,
+      "update": true,
+      "delete": false
+    },
+    "interviews": {
+      "create": true,
+      "read": true,
+      "update": true,
+      "delete": false
+    },
+    "assessments": {
+      "create": false,
+      "read": true,
+      "update": false,
+      "delete": false
+    },
+    "employees": {
+      "create": false,
+      "read": true,
+      "update": false,
+      "delete": false
+    },
+    "reports": {
+      "read": true
+    },
+    "settings": {
+      "read": false,
+      "update": false
+    }
+  }
+}
 ```
 
 ### Job Routes (`/jobs`)

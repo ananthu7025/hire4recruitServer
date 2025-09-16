@@ -1,0 +1,557 @@
+employees:
+  get:
+    tags:
+      - Employees
+    summary: Get employees with pagination and filters
+    description: Retrieve a list of company employees with support for filtering by role, department, status, and search
+    parameters:
+      - $ref: '../components/index.yaml#/parameters/PageParam'
+      - $ref: '../components/index.yaml#/parameters/LimitParam'
+      - name: role
+        in: query
+        description: Filter by employee role
+        schema:
+          type: string
+          enum: [company_admin, hr_manager, recruiter, interviewer, hiring_manager]
+      - name: isActive
+        in: query
+        description: Filter by active status
+        schema:
+          type: boolean
+      - name: department
+        in: query
+        description: Filter by department
+        schema:
+          type: string
+      - name: search
+        in: query
+        description: Search employees by name, email, department, or job title
+        schema:
+          type: string
+      - name: sortBy
+        in: query
+        description: Field to sort by
+        schema:
+          type: string
+          default: createdAt
+      - name: sortOrder
+        in: query
+        description: Sort order
+        schema:
+          type: string
+          enum: [asc, desc]
+          default: desc
+    security:
+      - BearerAuth: []
+    responses:
+      '200':
+        description: Employees retrieved successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                data:
+                  type: object
+                  properties:
+                    employees:
+                      type: array
+                      items:
+                        $ref: '../components/index.yaml#/schemas/Employee'
+                    pagination:
+                      type: object
+                      properties:
+                        currentPage:
+                          type: integer
+                        totalPages:
+                          type: integer
+                        totalItems:
+                          type: integer
+                        itemsPerPage:
+                          type: integer
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '403':
+        $ref: '../components/index.yaml#/responses/ForbiddenError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+employee-search:
+  get:
+    tags:
+      - Employees
+    summary: Search employees
+    description: Search employees by name, email, department, or job title with advanced filtering options
+    parameters:
+      - name: q
+        in: query
+        required: true
+        description: Search term (minimum 2 characters)
+        schema:
+          type: string
+          minLength: 2
+      - name: limit
+        in: query
+        description: Maximum number of results
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      - name: excludeRoles
+        in: query
+        description: Comma-separated list of roles to exclude
+        schema:
+          type: string
+      - name: includeInactive
+        in: query
+        description: Include inactive employees in search
+        schema:
+          type: boolean
+          default: false
+    security:
+      - BearerAuth: []
+    responses:
+      '200':
+        description: Search results
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                data:
+                  type: object
+                  properties:
+                    employees:
+                      type: array
+                      items:
+                        $ref: '../components/index.yaml#/schemas/Employee'
+      '400':
+        $ref: '../components/index.yaml#/responses/ValidationError'
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '403':
+        $ref: '../components/index.yaml#/responses/ForbiddenError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+employees-by-role:
+  get:
+    tags:
+      - Employees
+    summary: Get employees by role
+    description: Retrieve all active employees with a specific role
+    parameters:
+      - name: role
+        in: path
+        required: true
+        description: Employee role
+        schema:
+          type: string
+          enum: [company_admin, hr_manager, recruiter, interviewer, hiring_manager]
+    security:
+      - BearerAuth: []
+    responses:
+      '200':
+        description: Employees retrieved successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                data:
+                  type: object
+                  properties:
+                    employees:
+                      type: array
+                      items:
+                        $ref: '../components/index.yaml#/schemas/Employee'
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '403':
+        $ref: '../components/index.yaml#/responses/ForbiddenError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+employee-by-id:
+  get:
+    tags:
+      - Employees
+    summary: Get employee by ID
+    description: Retrieve detailed information about a specific employee
+    parameters:
+      - $ref: '../components/index.yaml#/parameters/EmployeeIdParam'
+    security:
+      - BearerAuth: []
+    responses:
+      '200':
+        description: Employee retrieved successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                data:
+                  type: object
+                  properties:
+                    employee:
+                      $ref: '../components/index.yaml#/schemas/Employee'
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '403':
+        $ref: '../components/index.yaml#/responses/ForbiddenError'
+      '404':
+        $ref: '../components/index.yaml#/responses/NotFoundError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+  put:
+    tags:
+      - Employees
+    summary: Update employee profile
+    description: Update employee information. Users can update their own profile or require appropriate permissions
+    parameters:
+      - $ref: '../components/index.yaml#/parameters/EmployeeIdParam'
+    security:
+      - BearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/index.yaml#/schemas/UpdateEmployeeRequest'
+    responses:
+      '200':
+        description: Employee updated successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                message:
+                  type: string
+                  example: User updated successfully
+                data:
+                  type: object
+                  properties:
+                    employee:
+                      $ref: '../components/index.yaml#/schemas/Employee'
+      '400':
+        $ref: '../components/index.yaml#/responses/ValidationError'
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '403':
+        $ref: '../components/index.yaml#/responses/ForbiddenError'
+      '404':
+        $ref: '../components/index.yaml#/responses/NotFoundError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+  delete:
+    tags:
+      - Employees
+    summary: Delete employee
+    description: Soft delete an employee (cannot delete self)
+    parameters:
+      - $ref: '../components/index.yaml#/parameters/EmployeeIdParam'
+    security:
+      - BearerAuth: []
+    responses:
+      '200':
+        description: Employee deleted successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                message:
+                  type: string
+                  example: User deleted successfully
+      '400':
+        description: Cannot delete self
+        content:
+          application/json:
+            schema:
+              $ref: '../components/index.yaml#/schemas/Error'
+            example:
+              error: Cannot delete self
+              message: You cannot delete your own account
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '403':
+        $ref: '../components/index.yaml#/responses/ForbiddenError'
+      '404':
+        $ref: '../components/index.yaml#/responses/NotFoundError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+employee-role:
+  put:
+    tags:
+      - Employees
+    summary: Update employee role
+    description: Update employee role and related information (company_admin or hr_manager only)
+    parameters:
+      - $ref: '../components/index.yaml#/parameters/EmployeeIdParam'
+    security:
+      - BearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/index.yaml#/schemas/UpdateEmployeeRoleRequest'
+    responses:
+      '200':
+        description: Employee role updated successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                message:
+                  type: string
+                  example: User role updated successfully
+                data:
+                  type: object
+                  properties:
+                    employee:
+                      $ref: '../components/index.yaml#/schemas/Employee'
+      '400':
+        $ref: '../components/index.yaml#/responses/ValidationError'
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '403':
+        $ref: '../components/index.yaml#/responses/ForbiddenError'
+      '404':
+        $ref: '../components/index.yaml#/responses/NotFoundError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+employee-activate:
+  post:
+    tags:
+      - Employees
+    summary: Activate employee
+    description: Activate a deactivated employee account
+    parameters:
+      - $ref: '../components/index.yaml#/parameters/EmployeeIdParam'
+    security:
+      - BearerAuth: []
+    responses:
+      '200':
+        description: Employee activated successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                message:
+                  type: string
+                  example: User activated successfully
+                data:
+                  type: object
+                  properties:
+                    employee:
+                      $ref: '../components/index.yaml#/schemas/Employee'
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '403':
+        $ref: '../components/index.yaml#/responses/ForbiddenError'
+      '404':
+        $ref: '../components/index.yaml#/responses/NotFoundError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+employee-deactivate:
+  post:
+    tags:
+      - Employees
+    summary: Deactivate employee
+    description: Deactivate an employee account (cannot deactivate self)
+    parameters:
+      - $ref: '../components/index.yaml#/parameters/EmployeeIdParam'
+    security:
+      - BearerAuth: []
+    responses:
+      '200':
+        description: Employee deactivated successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                message:
+                  type: string
+                  example: User deactivated successfully
+                data:
+                  type: object
+                  properties:
+                    employee:
+                      $ref: '../components/index.yaml#/schemas/Employee'
+      '400':
+        description: Cannot deactivate self
+        content:
+          application/json:
+            schema:
+              $ref: '../components/index.yaml#/schemas/Error'
+            example:
+              error: Cannot deactivate self
+              message: You cannot deactivate your own account
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '403':
+        $ref: '../components/index.yaml#/responses/ForbiddenError'
+      '404':
+        $ref: '../components/index.yaml#/responses/NotFoundError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+employee-activity:
+  get:
+    tags:
+      - Employees
+    summary: Get employee activity
+    description: Retrieve employee activity summary and statistics
+    parameters:
+      - $ref: '../components/index.yaml#/parameters/EmployeeIdParam'
+    security:
+      - BearerAuth: []
+    responses:
+      '200':
+        description: Employee activity retrieved successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                data:
+                  type: object
+                  properties:
+                    activity:
+                      $ref: '../components/index.yaml#/schemas/EmployeeActivity'
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '403':
+        $ref: '../components/index.yaml#/responses/ForbiddenError'
+      '404':
+        $ref: '../components/index.yaml#/responses/NotFoundError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+employee-permissions:
+  get:
+    tags:
+      - Employees
+    summary: Get employee permissions
+    description: View employee permissions (users can view their own permissions)
+    parameters:
+      - $ref: '../components/index.yaml#/parameters/EmployeeIdParam'
+    security:
+      - BearerAuth: []
+    responses:
+      '200':
+        description: Employee permissions retrieved successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                data:
+                  type: object
+                  properties:
+                    permissions:
+                      $ref: '../components/index.yaml#/schemas/EmployeePermissions'
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '403':
+        $ref: '../components/index.yaml#/responses/ForbiddenError'
+      '404':
+        $ref: '../components/index.yaml#/responses/NotFoundError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+  put:
+    tags:
+      - Employees
+    summary: Update employee permissions
+    description: Update employee permissions (company_admin only)
+    parameters:
+      - $ref: '../components/index.yaml#/parameters/EmployeeIdParam'
+    security:
+      - BearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              permissions:
+                $ref: '../components/index.yaml#/schemas/EmployeePermissions'
+            required:
+              - permissions
+    responses:
+      '200':
+        description: Employee permissions updated successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  example: true
+                message:
+                  type: string
+                  example: User permissions updated successfully
+                data:
+                  type: object
+                  properties:
+                    employee:
+                      $ref: '../components/index.yaml#/schemas/Employee'
+                    permissions:
+                      $ref: '../components/index.yaml#/schemas/EmployeePermissions'
+      '400':
+        $ref: '../components/index.yaml#/responses/ValidationError'
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '403':
+        $ref: '../components/index.yaml#/responses/ForbiddenError'
+      '404':
+        $ref: '../components/index.yaml#/responses/NotFoundError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'

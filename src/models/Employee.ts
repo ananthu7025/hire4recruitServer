@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
-export interface IUser extends Document {
+export interface IEmployee extends Document {
   _id: mongoose.Types.ObjectId;
   companyId: mongoose.Types.ObjectId;
 
@@ -17,7 +17,7 @@ export interface IUser extends Document {
     candidates: { create: boolean; read: boolean; update: boolean; delete: boolean; };
     interviews: { create: boolean; read: boolean; update: boolean; delete: boolean; };
     assessments: { create: boolean; read: boolean; update: boolean; delete: boolean; };
-    users: { create: boolean; read: boolean; update: boolean; delete: boolean; };
+    employees: { create: boolean; read: boolean; update: boolean; delete: boolean; };
     reports: { read: boolean; };
     settings: { read: boolean; update: boolean; };
   };
@@ -53,7 +53,7 @@ export interface IUser extends Document {
   updatedAt: Date;
 }
 
-const UserSchema: Schema = new Schema({
+const EmployeeSchema: Schema = new Schema({
   companyId: {
     type: Schema.Types.ObjectId,
     ref: 'Company',
@@ -121,7 +121,7 @@ const UserSchema: Schema = new Schema({
       update: { type: Boolean, default: false },
       delete: { type: Boolean, default: false }
     },
-    users: {
+    employees: {
       create: { type: Boolean, default: false },
       read: { type: Boolean, default: false },
       update: { type: Boolean, default: false },
@@ -197,7 +197,7 @@ const UserSchema: Schema = new Schema({
 
   invitedBy: {
     type: Schema.Types.ObjectId,
-    ref: 'User'
+    ref: 'Employee'
   },
   invitedAt: {
     type: Date
@@ -211,19 +211,19 @@ const UserSchema: Schema = new Schema({
 
   createdBy: {
     type: Schema.Types.ObjectId,
-    ref: 'User'
+    ref: 'Employee'
   },
   updatedBy: {
     type: Schema.Types.ObjectId,
-    ref: 'User'
+    ref: 'Employee'
   }
 }, {
   timestamps: true
 });
 
-UserSchema.index({ companyId: 1, email: 1 }, { unique: true });
-UserSchema.index({ companyId: 1, isActive: 1, isDeleted: 1 });
-UserSchema.index({ inviteToken: 1 });
-UserSchema.index({ passwordResetToken: 1 });
+EmployeeSchema.index({ companyId: 1, email: 1 }, { unique: true });
+EmployeeSchema.index({ companyId: 1, isActive: 1, isDeleted: 1 });
+EmployeeSchema.index({ inviteToken: 1 });
+EmployeeSchema.index({ passwordResetToken: 1 });
 
-export default mongoose.model<IUser>('User', UserSchema);
+export default mongoose.model<IEmployee>('Employee', EmployeeSchema);

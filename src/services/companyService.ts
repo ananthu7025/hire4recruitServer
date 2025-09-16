@@ -1,5 +1,5 @@
 import Company, { ICompany } from '../models/Company';
-import User from '../models/User';
+import Employee from '../models/Employee';
 import { logger } from '../config/logger';
 import mongoose from 'mongoose';
 
@@ -62,8 +62,8 @@ export class CompanyService {
         activeUsers,
         // TODO: Add job, candidate, and interview counts when those models are implemented
       ] = await Promise.all([
-        User.countDocuments({ companyId, isDeleted: false }),
-        User.countDocuments({ companyId, isDeleted: false, isActive: true }),
+        Employee.countDocuments({ companyId, isDeleted: false }),
+        Employee.countDocuments({ companyId, isDeleted: false, isActive: true }),
       ]);
 
       const stats: CompanyStats = {
@@ -213,7 +213,7 @@ export class CompanyService {
       }
 
       // Deactivate all users in the company
-      await User.updateMany(
+      await Employee.updateMany(
         { companyId },
         {
           isActive: false,
@@ -308,7 +308,7 @@ export class CompanyService {
       }
 
       const [users, total] = await Promise.all([
-        User.find(filter)
+        Employee.find(filter)
           .select('-password -refreshToken -passwordResetToken')
           .sort({ createdAt: -1 })
           .skip(skip)
@@ -316,7 +316,7 @@ export class CompanyService {
           .populate('createdBy', 'firstName lastName email')
           .populate('invitedBy', 'firstName lastName email')
           .lean(),
-        User.countDocuments(filter)
+        Employee.countDocuments(filter)
       ]);
 
       const totalPages = Math.ceil(total / limit);
@@ -345,7 +345,7 @@ export class CompanyService {
         throw new Error('Company not found');
       }
 
-      const userCount = await User.countDocuments({
+      const userCount = await Employee.countDocuments({
         companyId,
         isDeleted: false,
         isActive: true
@@ -383,7 +383,7 @@ export class CompanyService {
       const dateThreshold = new Date();
       dateThreshold.setDate(dateThreshold.getDate() - days);
 
-      const newUsers = await User.countDocuments({
+      const newUsers = await Employee.countDocuments({
         companyId,
         isDeleted: false,
         createdAt: { $gte: dateThreshold }

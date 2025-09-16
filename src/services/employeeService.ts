@@ -1,9 +1,9 @@
-import User, { IUser } from '../models/User';
+import Employee, { IEmployee } from '../models/Employee';
 import { AuthUtils } from '../utils/auth';
 import { logger } from '../config/logger';
 import mongoose from 'mongoose';
 
-export interface UpdateUserData {
+export interface UpdateEmployeeData {
   firstName?: string;
   lastName?: string;
   phone?: string;
@@ -18,18 +18,18 @@ export interface UpdateUserData {
   };
 }
 
-export interface UpdateUserRoleData {
-  role: IUser['role'];
+export interface UpdateEmployeeRoleData {
+  role: IEmployee['role'];
   department?: string;
   jobTitle?: string;
 }
 
-export class UserService {
-  // Get user by ID
-  static async getUserById(userId: string, companyId: string): Promise<IUser | null> {
+export class EmployeeService {
+  // Get employee by ID
+  static async getEmployeeById(employeeId: string, companyId: string): Promise<IEmployee | null> {
     try {
-      const user = await User.findOne({
-        _id: userId,
+      const employee = await Employee.findOne({
+        _id: employeeId,
         companyId,
         isDeleted: false
       })
@@ -37,27 +37,27 @@ export class UserService {
         .populate('createdBy', 'firstName lastName email')
         .populate('invitedBy', 'firstName lastName email');
 
-      return user;
+      return employee;
     } catch (error) {
-      logger.error('Get user by ID failed:', { userId, companyId, error });
+      logger.error('Get employee by ID failed:', { employeeId, companyId, error });
       throw error;
     }
   }
 
-  // Get users with pagination and filters
-  static async getUsers(
+  // Get employees with pagination and filters
+  static async getEmployees(
     companyId: string,
     options: {
       page?: number;
       limit?: number;
-      role?: IUser['role'];
+      role?: IEmployee['role'];
       isActive?: boolean;
       department?: string;
       search?: string;
       sortBy?: string;
       sortOrder?: 'asc' | 'desc';
     } = {}
-  ): Promise<{ users: IUser[]; total: number; totalPages: number }> {
+  ): Promise<{ employees: IEmployee[]; total: number; totalPages: number }> {
     try {
       const {
         page = 1,
@@ -105,8 +105,8 @@ export class UserService {
       const sort: any = {};
       sort[sortBy] = sortOrder === 'asc' ? 1 : -1;
 
-      const [users, total] = await Promise.all([
-        User.find(filter)
+      const [employees, total] = await Promise.all([
+        Employee.find(filter)
           .select('-password -refreshToken -passwordResetToken')
           .sort(sort)
           .skip(skip)
@@ -114,26 +114,26 @@ export class UserService {
           .populate('createdBy', 'firstName lastName email')
           .populate('invitedBy', 'firstName lastName email')
           .lean(),
-        User.countDocuments(filter)
+        Employee.countDocuments(filter)
       ]);
 
       const totalPages = Math.ceil(total / limit);
 
-      return { users: users as IUser[], total, totalPages };
+      return { employees: employees as IEmployee[], total, totalPages };
 
     } catch (error) {
-      logger.error('Get users failed:', { companyId, error });
+      logger.error('Get employees failed:', { companyId, error });
       throw error;
     }
   }
 
-  // Update user profile
-  static async updateUser(
-    userId: string,
+  // Update employee profile
+  static async updateEmployee(
+    employeeId: string,
     companyId: string,
-    updates: UpdateUserData,
+    updates: UpdateEmployeeData,
     updatedBy: string
-  ): Promise<IUser> {
+  ): Promise<IEmployee> {
     try {
       // Prepare update data
       const updateData: any = { ...updates };
@@ -146,9 +146,9 @@ export class UserService {
         delete updateData.preferences;
       }
 
-      const user = await User.findOneAndUpdate(
+      const employee = await Employee.findOneAndUpdate(
         {
-          _id: userId,
+          _id: employeeId,
           companyId,
           isDeleted: false
         },
@@ -163,39 +163,39 @@ export class UserService {
         }
       ).select('-password -refreshToken -passwordResetToken');
 
-      if (!user) {
+      if (!employee) {
         throw new Error('User not found');
       }
 
       logger.info('User updated successfully', {
-        userId,
+        employeeId,
         companyId,
         updatedBy,
         updatedFields: Object.keys(updates)
       });
 
-      return user;
+      return employee;
 
     } catch (error) {
-      logger.error('User update failed:', { userId, companyId, error });
+      logger.error('User update failed:', { employeeId, companyId, error });
       throw error;
     }
   }
 
-  // Update user role and permissions
-  static async updateUserRole(
-    userId: string,
+  // Update employee role and permissions
+  static async updateEmployeeRole(
+    employeeId: string,
     companyId: string,
-    roleData: UpdateUserRoleData,
+    roleData: UpdateEmployeeRoleData,
     updatedBy: string
-  ): Promise<IUser> {
+  ): Promise<IEmployee> {
     try {
       // Generate new permissions based on role
       const permissions = AuthUtils.generatePermissionsByRole(roleData.role);
 
-      const user = await User.findOneAndUpdate(
+      const employee = await Employee.findOneAndUpdate(
         {
-          _id: userId,
+          _id: employeeId,
           companyId,
           isDeleted: false
         },
@@ -213,35 +213,35 @@ export class UserService {
         }
       ).select('-password -refreshToken -passwordResetToken');
 
-      if (!user) {
+      if (!employee) {
         throw new Error('User not found');
       }
 
       logger.info('User role updated successfully', {
-        userId,
+        employeeId,
         companyId,
         newRole: roleData.role,
         updatedBy
       });
 
-      return user;
+      return employee;
 
     } catch (error) {
-      logger.error('User role update failed:', { userId, companyId, error });
+      logger.error('User role update failed:', { employeeId, companyId, error });
       throw error;
     }
   }
 
-  // Activate user
-  static async activateUser(
-    userId: string,
+  // Activate employee
+  static async activateEmployee(
+    employeeId: string,
     companyId: string,
     activatedBy: string
-  ): Promise<IUser> {
+  ): Promise<IEmployee> {
     try {
-      const user = await User.findOneAndUpdate(
+      const employee = await Employee.findOneAndUpdate(
         {
-          _id: userId,
+          _id: employeeId,
           companyId,
           isDeleted: false
         },
@@ -256,35 +256,35 @@ export class UserService {
         }
       ).select('-password -refreshToken -passwordResetToken');
 
-      if (!user) {
+      if (!employee) {
         throw new Error('User not found');
       }
 
       logger.info('User activated successfully', {
-        userId,
+        employeeId,
         companyId,
         activatedBy,
-        userEmail: user.email
+        employeeEmail: employee.email
       });
 
-      return user;
+      return employee;
 
     } catch (error) {
-      logger.error('User activation failed:', { userId, companyId, error });
+      logger.error('User activation failed:', { employeeId, companyId, error });
       throw error;
     }
   }
 
-  // Deactivate user
-  static async deactivateUser(
-    userId: string,
+  // Deactivate employee
+  static async deactivateEmployee(
+    employeeId: string,
     companyId: string,
     deactivatedBy: string
-  ): Promise<IUser> {
+  ): Promise<IEmployee> {
     try {
-      const user = await User.findOneAndUpdate(
+      const employee = await Employee.findOneAndUpdate(
         {
-          _id: userId,
+          _id: employeeId,
           companyId,
           isDeleted: false
         },
@@ -300,35 +300,35 @@ export class UserService {
         }
       ).select('-password -refreshToken -passwordResetToken');
 
-      if (!user) {
+      if (!employee) {
         throw new Error('User not found');
       }
 
       logger.info('User deactivated successfully', {
-        userId,
+        employeeId,
         companyId,
         deactivatedBy,
-        userEmail: user.email
+        employeeEmail: employee.email
       });
 
-      return user;
+      return employee;
 
     } catch (error) {
-      logger.error('User deactivation failed:', { userId, companyId, error });
+      logger.error('User deactivation failed:', { employeeId, companyId, error });
       throw error;
     }
   }
 
-  // Soft delete user
-  static async deleteUser(
-    userId: string,
+  // Soft delete employee
+  static async deleteEmployee(
+    employeeId: string,
     companyId: string,
     deletedBy: string
   ): Promise<void> {
     try {
-      const user = await User.findOneAndUpdate(
+      const employee = await Employee.findOneAndUpdate(
         {
-          _id: userId,
+          _id: employeeId,
           companyId,
           isDeleted: false
         },
@@ -343,25 +343,25 @@ export class UserService {
         }
       );
 
-      if (!user) {
+      if (!employee) {
         throw new Error('User not found');
       }
 
       logger.info('User deleted successfully', {
-        userId,
+        employeeId,
         companyId,
         deletedBy,
-        userEmail: user.email
+        employeeEmail: employee.email
       });
 
     } catch (error) {
-      logger.error('User deletion failed:', { userId, companyId, error });
+      logger.error('User deletion failed:', { employeeId, companyId, error });
       throw error;
     }
   }
 
-  // Get user activity summary
-  static async getUserActivity(userId: string, companyId: string): Promise<{
+  // Get employee activity summary
+  static async getEmployeeActivity(employeeId: string, companyId: string): Promise<{
     lastLogin?: Date;
     loginCount: number;
     isActive: boolean;
@@ -369,48 +369,48 @@ export class UserService {
     invitationStatus: 'pending' | 'accepted' | 'not_invited';
   }> {
     try {
-      const user = await User.findOne({
-        _id: userId,
+      const employee = await Employee.findOne({
+        _id: employeeId,
         companyId,
         isDeleted: false
       }).select('lastLogin isActive createdAt inviteToken inviteAcceptedAt');
 
-      if (!user) {
+      if (!employee) {
         throw new Error('User not found');
       }
 
       const accountAge = Math.floor(
-        (Date.now() - user.createdAt.getTime()) / (1000 * 60 * 60 * 24)
+        (Date.now() - employee.createdAt.getTime()) / (1000 * 60 * 60 * 24)
       );
 
       let invitationStatus: 'pending' | 'accepted' | 'not_invited' = 'not_invited';
-      if (user.inviteToken) {
+      if (employee.inviteToken) {
         invitationStatus = 'pending';
-      } else if (user.inviteAcceptedAt) {
+      } else if (employee.inviteAcceptedAt) {
         invitationStatus = 'accepted';
       }
 
       return {
-        lastLogin: user.lastLogin,
+        lastLogin: employee.lastLogin,
         loginCount: 0, // TODO: Implement login tracking
-        isActive: user.isActive,
+        isActive: employee.isActive,
         accountAge,
         invitationStatus
       };
 
     } catch (error) {
-      logger.error('Get user activity failed:', { userId, companyId, error });
+      logger.error('Get employee activity failed:', { employeeId, companyId, error });
       throw error;
     }
   }
 
-  // Get users by role
-  static async getUsersByRole(
+  // Get employees by role
+  static async getEmployeesByRole(
     companyId: string,
-    role: IUser['role']
-  ): Promise<IUser[]> {
+    role: IEmployee['role']
+  ): Promise<IEmployee[]> {
     try {
-      const users = await User.find({
+      const employees = await Employee.find({
         companyId,
         role,
         isDeleted: false,
@@ -420,24 +420,24 @@ export class UserService {
         .sort({ firstName: 1, lastName: 1 })
         .lean();
 
-      return users as IUser[];
+      return employees as IEmployee[];
 
     } catch (error) {
-      logger.error('Get users by role failed:', { companyId, role, error });
+      logger.error('Get employees by role failed:', { companyId, role, error });
       throw error;
     }
   }
 
-  // Search users
-  static async searchUsers(
+  // Search employees
+  static async searchEmployees(
     companyId: string,
     searchTerm: string,
     options: {
       limit?: number;
-      excludeRoles?: IUser['role'][];
+      excludeRoles?: IEmployee['role'][];
       includeInactive?: boolean;
     } = {}
-  ): Promise<IUser[]> {
+  ): Promise<IEmployee[]> {
     try {
       const { limit = 20, excludeRoles = [], includeInactive = false } = options;
 
@@ -461,55 +461,55 @@ export class UserService {
         filter.role = { $nin: excludeRoles };
       }
 
-      const users = await User.find(filter)
+      const employees = await Employee.find(filter)
         .select('firstName lastName email role department jobTitle isActive')
         .sort({ firstName: 1, lastName: 1 })
         .limit(limit)
         .lean();
 
-      return users as IUser[];
+      return employees as IEmployee[];
 
     } catch (error) {
-      logger.error('Search users failed:', { companyId, searchTerm, error });
+      logger.error('Search employees failed:', { companyId, searchTerm, error });
       throw error;
     }
   }
 
-  // Get user permissions
-  static async getUserPermissions(userId: string, companyId: string): Promise<IUser['permissions']> {
+  // Get employee permissions
+  static async getEmployeePermissions(employeeId: string, companyId: string): Promise<IEmployee['permissions']> {
     try {
-      const user = await User.findOne({
-        _id: userId,
+      const employee = await Employee.findOne({
+        _id: employeeId,
         companyId,
         isDeleted: false,
         isActive: true
       }).select('permissions role');
 
-      if (!user) {
+      if (!employee) {
         throw new Error('User not found');
       }
 
-      return user.permissions;
+      return employee.permissions;
 
     } catch (error) {
-      logger.error('Get user permissions failed:', { userId, companyId, error });
+      logger.error('Get employee permissions failed:', { employeeId, companyId, error });
       throw error;
     }
   }
 
-  // Update user permissions (custom permissions override)
-  static async updateUserPermissions(
-    userId: string,
+  // Update employee permissions (custom permissions override)
+  static async updateEmployeePermissions(
+    employeeId: string,
     companyId: string,
-    permissions: Partial<IUser['permissions']>,
+    permissions: Partial<IEmployee['permissions']>,
     updatedBy: string
-  ): Promise<IUser> {
+  ): Promise<IEmployee> {
     try {
       const updateData: any = {};
 
       // Build nested permission updates
       Object.keys(permissions).forEach(resource => {
-        const resourcePermissions = permissions[resource as keyof IUser['permissions']];
+        const resourcePermissions = permissions[resource as keyof IEmployee['permissions']];
         if (resourcePermissions) {
           Object.keys(resourcePermissions).forEach(action => {
             updateData[`permissions.${resource}.${action}`] =
@@ -518,9 +518,9 @@ export class UserService {
         }
       });
 
-      const user = await User.findOneAndUpdate(
+      const employee = await Employee.findOneAndUpdate(
         {
-          _id: userId,
+          _id: employeeId,
           companyId,
           isDeleted: false
         },
@@ -535,21 +535,21 @@ export class UserService {
         }
       ).select('-password -refreshToken -passwordResetToken');
 
-      if (!user) {
+      if (!employee) {
         throw new Error('User not found');
       }
 
       logger.info('User permissions updated successfully', {
-        userId,
+        employeeId,
         companyId,
         updatedBy,
         updatedPermissions: Object.keys(permissions)
       });
 
-      return user;
+      return employee;
 
     } catch (error) {
-      logger.error('User permissions update failed:', { userId, companyId, error });
+      logger.error('User permissions update failed:', { employeeId, companyId, error });
       throw error;
     }
   }

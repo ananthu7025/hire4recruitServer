@@ -1,10 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
-import { UserService } from '../services/userService';
+import { EmployeeService } from '../services/employeeService';
 import { logger } from '../config/logger';
 
-export class UserController {
-  // Get users with pagination and filters
-  static async getUsers(req: Request, res: Response, next: NextFunction): Promise<void> {
+export class EmployeeController {
+  // Get employees with pagination and filters
+  static async getEmployees(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       if (!req.user?.companyId) {
         res.status(401).json({
@@ -25,12 +25,12 @@ export class UserController {
         sortOrder: req.query.sortOrder as 'asc' | 'desc'
       };
 
-      const result = await UserService.getUsers(req.user.companyId, options);
+      const result = await EmployeeService.getEmployees(req.user.companyId, options);
 
       res.status(200).json({
         success: true,
         data: {
-          users: result.users,
+          employees: result.employees,
           pagination: {
             currentPage: options.page,
             totalPages: result.totalPages,
@@ -41,17 +41,17 @@ export class UserController {
       });
 
     } catch (error) {
-      logger.error('Get users error:', error);
+      logger.error('Get employees error:', error);
 
       res.status(500).json({
-        error: 'Failed to get users',
-        message: 'An error occurred while fetching users'
+        error: 'Failed to get employees',
+        message: 'An error occurred while fetching employees'
       });
     }
   }
 
-  // Get user by ID
-  static async getUserById(req: Request, res: Response, next: NextFunction): Promise<void> {
+  // Get employee by ID
+  static async getEmployeeById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       if (!req.user?.companyId) {
         res.status(401).json({
@@ -61,34 +61,34 @@ export class UserController {
         return;
       }
 
-      const { userId } = req.params;
-      const user = await UserService.getUserById(userId, req.user.companyId);
+      const { employeeId } = req.params;
+      const employee = await EmployeeService.getEmployeeById(employeeId, req.user.companyId);
 
-      if (!user) {
+      if (!employee) {
         res.status(404).json({
           error: 'User not found',
-          message: 'The requested user does not exist'
+          message: 'The requested employee does not exist'
         });
         return;
       }
 
       res.status(200).json({
         success: true,
-        data: { user }
+        data: { employee }
       });
 
     } catch (error) {
-      logger.error('Get user by ID error:', error);
+      logger.error('Get employee by ID error:', error);
 
       res.status(500).json({
-        error: 'Failed to get user',
-        message: 'An error occurred while fetching user information'
+        error: 'Failed to get employee',
+        message: 'An error occurred while fetching employee information'
       });
     }
   }
 
-  // Update user profile
-  static async updateUser(req: Request, res: Response, next: NextFunction): Promise<void> {
+  // Update employee profile
+  static async updateEmployee(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       if (!req.user?.companyId) {
         res.status(401).json({
@@ -98,11 +98,11 @@ export class UserController {
         return;
       }
 
-      const { userId } = req.params;
+      const { employeeId } = req.params;
       const updates = req.body;
 
-      const updatedUser = await UserService.updateUser(
-        userId,
+      const updatedUser = await EmployeeService.updateEmployee(
+        employeeId,
         req.user.companyId,
         updates,
         req.user.userId
@@ -111,29 +111,29 @@ export class UserController {
       res.status(200).json({
         success: true,
         message: 'User updated successfully',
-        data: { user: updatedUser }
+        data: { employee: updatedUser }
       });
 
     } catch (error) {
-      logger.error('Update user error:', error);
+      logger.error('Update employee error:', error);
 
       if (error instanceof Error && error.message === 'User not found') {
         res.status(404).json({
           error: 'User not found',
-          message: 'The requested user does not exist'
+          message: 'The requested employee does not exist'
         });
         return;
       }
 
       res.status(500).json({
-        error: 'Failed to update user',
-        message: 'An error occurred while updating user information'
+        error: 'Failed to update employee',
+        message: 'An error occurred while updating employee information'
       });
     }
   }
 
-  // Update user role
-  static async updateUserRole(req: Request, res: Response, next: NextFunction): Promise<void> {
+  // Update employee role
+  static async updateEmployeeRole(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       if (!req.user?.companyId) {
         res.status(401).json({
@@ -143,11 +143,11 @@ export class UserController {
         return;
       }
 
-      const { userId } = req.params;
+      const { employeeId } = req.params;
       const { role, department, jobTitle } = req.body;
 
-      const updatedUser = await UserService.updateUserRole(
-        userId,
+      const updatedUser = await EmployeeService.updateEmployeeRole(
+        employeeId,
         req.user.companyId,
         { role, department, jobTitle },
         req.user.userId
@@ -156,29 +156,29 @@ export class UserController {
       res.status(200).json({
         success: true,
         message: 'User role updated successfully',
-        data: { user: updatedUser }
+        data: { employee: updatedUser }
       });
 
     } catch (error) {
-      logger.error('Update user role error:', error);
+      logger.error('Update employee role error:', error);
 
       if (error instanceof Error && error.message === 'User not found') {
         res.status(404).json({
           error: 'User not found',
-          message: 'The requested user does not exist'
+          message: 'The requested employee does not exist'
         });
         return;
       }
 
       res.status(500).json({
-        error: 'Failed to update user role',
-        message: 'An error occurred while updating user role'
+        error: 'Failed to update employee role',
+        message: 'An error occurred while updating employee role'
       });
     }
   }
 
-  // Activate user
-  static async activateUser(req: Request, res: Response, next: NextFunction): Promise<void> {
+  // Activate employee
+  static async activateEmployee(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       if (!req.user?.companyId) {
         res.status(401).json({
@@ -188,10 +188,10 @@ export class UserController {
         return;
       }
 
-      const { userId } = req.params;
+      const { employeeId } = req.params;
 
-      const activatedUser = await UserService.activateUser(
-        userId,
+      const activatedUser = await EmployeeService.activateEmployee(
+        employeeId,
         req.user.companyId,
         req.user.userId
       );
@@ -199,29 +199,29 @@ export class UserController {
       res.status(200).json({
         success: true,
         message: 'User activated successfully',
-        data: { user: activatedUser }
+        data: { employee: activatedUser }
       });
 
     } catch (error) {
-      logger.error('Activate user error:', error);
+      logger.error('Activate employee error:', error);
 
       if (error instanceof Error && error.message === 'User not found') {
         res.status(404).json({
           error: 'User not found',
-          message: 'The requested user does not exist'
+          message: 'The requested employee does not exist'
         });
         return;
       }
 
       res.status(500).json({
-        error: 'Failed to activate user',
-        message: 'An error occurred while activating user'
+        error: 'Failed to activate employee',
+        message: 'An error occurred while activating employee'
       });
     }
   }
 
-  // Deactivate user
-  static async deactivateUser(req: Request, res: Response, next: NextFunction): Promise<void> {
+  // Deactivate employee
+  static async deactivateEmployee(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       if (!req.user?.companyId) {
         res.status(401).json({
@@ -231,10 +231,10 @@ export class UserController {
         return;
       }
 
-      const { userId } = req.params;
+      const { employeeId } = req.params;
 
-      // Prevent users from deactivating themselves
-      if (userId === req.user.userId) {
+      // Prevent employees from deactivating themselves
+      if (employeeId === req.user.userId) {
         res.status(400).json({
           error: 'Cannot deactivate self',
           message: 'You cannot deactivate your own account'
@@ -242,8 +242,8 @@ export class UserController {
         return;
       }
 
-      const deactivatedUser = await UserService.deactivateUser(
-        userId,
+      const deactivatedUser = await EmployeeService.deactivateEmployee(
+        employeeId,
         req.user.companyId,
         req.user.userId
       );
@@ -251,29 +251,29 @@ export class UserController {
       res.status(200).json({
         success: true,
         message: 'User deactivated successfully',
-        data: { user: deactivatedUser }
+        data: { employee: deactivatedUser }
       });
 
     } catch (error) {
-      logger.error('Deactivate user error:', error);
+      logger.error('Deactivate employee error:', error);
 
       if (error instanceof Error && error.message === 'User not found') {
         res.status(404).json({
           error: 'User not found',
-          message: 'The requested user does not exist'
+          message: 'The requested employee does not exist'
         });
         return;
       }
 
       res.status(500).json({
-        error: 'Failed to deactivate user',
-        message: 'An error occurred while deactivating user'
+        error: 'Failed to deactivate employee',
+        message: 'An error occurred while deactivating employee'
       });
     }
   }
 
-  // Delete user
-  static async deleteUser(req: Request, res: Response, next: NextFunction): Promise<void> {
+  // Delete employee
+  static async deleteEmployee(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       if (!req.user?.companyId) {
         res.status(401).json({
@@ -283,10 +283,10 @@ export class UserController {
         return;
       }
 
-      const { userId } = req.params;
+      const { employeeId } = req.params;
 
-      // Prevent users from deleting themselves
-      if (userId === req.user.userId) {
+      // Prevent employees from deleting themselves
+      if (employeeId === req.user.userId) {
         res.status(400).json({
           error: 'Cannot delete self',
           message: 'You cannot delete your own account'
@@ -294,8 +294,8 @@ export class UserController {
         return;
       }
 
-      await UserService.deleteUser(
-        userId,
+      await EmployeeService.deleteEmployee(
+        employeeId,
         req.user.companyId,
         req.user.userId
       );
@@ -306,25 +306,25 @@ export class UserController {
       });
 
     } catch (error) {
-      logger.error('Delete user error:', error);
+      logger.error('Delete employee error:', error);
 
       if (error instanceof Error && error.message === 'User not found') {
         res.status(404).json({
           error: 'User not found',
-          message: 'The requested user does not exist'
+          message: 'The requested employee does not exist'
         });
         return;
       }
 
       res.status(500).json({
-        error: 'Failed to delete user',
-        message: 'An error occurred while deleting user'
+        error: 'Failed to delete employee',
+        message: 'An error occurred while deleting employee'
       });
     }
   }
 
-  // Get user activity
-  static async getUserActivity(req: Request, res: Response, next: NextFunction): Promise<void> {
+  // Get employee activity
+  static async getEmployeeActivity(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       if (!req.user?.companyId) {
         res.status(401).json({
@@ -334,8 +334,8 @@ export class UserController {
         return;
       }
 
-      const { userId } = req.params;
-      const activity = await UserService.getUserActivity(userId, req.user.companyId);
+      const { employeeId } = req.params;
+      const activity = await EmployeeService.getEmployeeActivity(employeeId, req.user.companyId);
 
       res.status(200).json({
         success: true,
@@ -343,25 +343,25 @@ export class UserController {
       });
 
     } catch (error) {
-      logger.error('Get user activity error:', error);
+      logger.error('Get employee activity error:', error);
 
       if (error instanceof Error && error.message === 'User not found') {
         res.status(404).json({
           error: 'User not found',
-          message: 'The requested user does not exist'
+          message: 'The requested employee does not exist'
         });
         return;
       }
 
       res.status(500).json({
-        error: 'Failed to get user activity',
-        message: 'An error occurred while fetching user activity'
+        error: 'Failed to get employee activity',
+        message: 'An error occurred while fetching employee activity'
       });
     }
   }
 
-  // Get users by role
-  static async getUsersByRole(req: Request, res: Response, next: NextFunction): Promise<void> {
+  // Get employees by role
+  static async getEmployeesByRole(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       if (!req.user?.companyId) {
         res.status(401).json({
@@ -372,25 +372,25 @@ export class UserController {
       }
 
       const { role } = req.params;
-      const users = await UserService.getUsersByRole(req.user.companyId, role as any);
+      const employees = await EmployeeService.getEmployeesByRole(req.user.companyId, role as any);
 
       res.status(200).json({
         success: true,
-        data: { users }
+        data: { employees }
       });
 
     } catch (error) {
-      logger.error('Get users by role error:', error);
+      logger.error('Get employees by role error:', error);
 
       res.status(500).json({
-        error: 'Failed to get users by role',
-        message: 'An error occurred while fetching users by role'
+        error: 'Failed to get employees by role',
+        message: 'An error occurred while fetching employees by role'
       });
     }
   }
 
-  // Search users
-  static async searchUsers(req: Request, res: Response, next: NextFunction): Promise<void> {
+  // Search employees
+  static async searchEmployees(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       if (!req.user?.companyId) {
         res.status(401).json({
@@ -416,25 +416,25 @@ export class UserController {
         includeInactive: req.query.includeInactive === 'true'
       };
 
-      const users = await UserService.searchUsers(req.user.companyId, searchTerm, options);
+      const employees = await EmployeeService.searchEmployees(req.user.companyId, searchTerm, options);
 
       res.status(200).json({
         success: true,
-        data: { users }
+        data: { employees }
       });
 
     } catch (error) {
-      logger.error('Search users error:', error);
+      logger.error('Search employees error:', error);
 
       res.status(500).json({
-        error: 'Failed to search users',
-        message: 'An error occurred while searching users'
+        error: 'Failed to search employees',
+        message: 'An error occurred while searching employees'
       });
     }
   }
 
-  // Get user permissions
-  static async getUserPermissions(req: Request, res: Response, next: NextFunction): Promise<void> {
+  // Get employee permissions
+  static async getEmployeePermissions(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       if (!req.user?.companyId) {
         res.status(401).json({
@@ -444,8 +444,8 @@ export class UserController {
         return;
       }
 
-      const { userId } = req.params;
-      const permissions = await UserService.getUserPermissions(userId, req.user.companyId);
+      const { employeeId } = req.params;
+      const permissions = await EmployeeService.getEmployeePermissions(employeeId, req.user.companyId);
 
       res.status(200).json({
         success: true,
@@ -453,25 +453,25 @@ export class UserController {
       });
 
     } catch (error) {
-      logger.error('Get user permissions error:', error);
+      logger.error('Get employee permissions error:', error);
 
       if (error instanceof Error && error.message === 'User not found') {
         res.status(404).json({
           error: 'User not found',
-          message: 'The requested user does not exist'
+          message: 'The requested employee does not exist'
         });
         return;
       }
 
       res.status(500).json({
-        error: 'Failed to get user permissions',
-        message: 'An error occurred while fetching user permissions'
+        error: 'Failed to get employee permissions',
+        message: 'An error occurred while fetching employee permissions'
       });
     }
   }
 
-  // Update user permissions
-  static async updateUserPermissions(req: Request, res: Response, next: NextFunction): Promise<void> {
+  // Update employee permissions
+  static async updateEmployeePermissions(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       if (!req.user?.companyId) {
         res.status(401).json({
@@ -481,11 +481,11 @@ export class UserController {
         return;
       }
 
-      const { userId } = req.params;
+      const { employeeId } = req.params;
       const permissions = req.body.permissions;
 
-      const updatedUser = await UserService.updateUserPermissions(
-        userId,
+      const updatedUser = await EmployeeService.updateEmployeePermissions(
+        employeeId,
         req.user.companyId,
         permissions,
         req.user.userId
@@ -495,25 +495,25 @@ export class UserController {
         success: true,
         message: 'User permissions updated successfully',
         data: {
-          user: updatedUser,
+          employee: updatedUser,
           permissions: updatedUser.permissions
         }
       });
 
     } catch (error) {
-      logger.error('Update user permissions error:', error);
+      logger.error('Update employee permissions error:', error);
 
       if (error instanceof Error && error.message === 'User not found') {
         res.status(404).json({
           error: 'User not found',
-          message: 'The requested user does not exist'
+          message: 'The requested employee does not exist'
         });
         return;
       }
 
       res.status(500).json({
-        error: 'Failed to update user permissions',
-        message: 'An error occurred while updating user permissions'
+        error: 'Failed to update employee permissions',
+        message: 'An error occurred while updating employee permissions'
       });
     }
   }

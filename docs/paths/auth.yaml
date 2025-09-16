@@ -274,13 +274,13 @@ profile:
       '500':
         $ref: '../components/index.yaml#/responses/InternalServerError'
 
-invite-user:
+invite-employee:
   post:
     tags:
       - Authentication
-    summary: Invite user to company
-    description: Send invitation to join company
-    operationId: inviteUser
+    summary: Invite employee to company
+    description: Send invitation to join company as an employee
+    operationId: inviteEmployee
     security:
       - BearerAuth: []
     requestBody:
@@ -306,8 +306,9 @@ invite-user:
                 example: "Smith"
               role:
                 type: string
-                enum: [hr_manager, recruiter, interviewer, hiring_manager]
+                enum: [company_admin, hr_manager, recruiter, interviewer, hiring_manager]
                 example: "recruiter"
+                description: Employee role - can be any valid role including company_admin
               department:
                 type: string
                 example: "HR"
@@ -317,6 +318,10 @@ invite-user:
               phone:
                 type: string
                 example: "+1234567891"
+              employeeId:
+                type: string
+                example: "EMP-001"
+                description: Internal employee ID
             required:
               - email
               - firstName
@@ -324,7 +329,7 @@ invite-user:
               - role
     responses:
       '201':
-        description: User invitation sent successfully
+        description: Employee invitation sent successfully
         content:
           application/json:
             schema:
@@ -335,7 +340,7 @@ invite-user:
                     data:
                       type: object
                       properties:
-                        invitedUser:
+                        invitedEmployee:
                           type: object
                           properties:
                             id:
@@ -348,9 +353,18 @@ invite-user:
                               type: string
                             role:
                               type: string
+                            department:
+                              type: string
+                            jobTitle:
+                              type: string
+                            employeeId:
+                              type: string
                             invitedAt:
                               type: string
                               format: date-time
+                            invitedBy:
+                              type: string
+                              format: objectId
       '401':
         $ref: '../components/index.yaml#/responses/UnauthorizedError'
       '403':

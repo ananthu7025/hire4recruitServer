@@ -22,7 +22,7 @@ router.get("/stats", CompanyController.getCompanyStats);
 
 router.get(
   "/users",
-  AuthMiddleware.requirePermission("users", "read"),
+  AuthMiddleware.requirePermission("employees", "read"),
   ValidationMiddleware.validatePagination,
   CompanyController.getCompanyUsers
 );

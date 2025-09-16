@@ -64,13 +64,13 @@
         currency: 'INR',
         name: 'Innovatech Labs',
         description: 'Test Payment',
-        order_id: 'order_RIEaJKUFQsDeyu',  // Mock orderId for demo
+        order_id: 'order_RIN3fTXV4UOzVc',  // Mock orderId for demo
         handler: function (response) {
           const paymentData = {
             razorpayOrderId: options.order_id,
             razorpayPaymentId: response.razorpay_payment_id,
             razorpaySignature: response.razorpay_signature,
-            companyId: '68c854d165f19a3d2e448856'
+            companyId: '68c9ab58242efc9405b517c1'
           };
           document.getElementById('paymentResult').textContent = JSON.stringify(paymentData, null, 2);
         },

@@ -96,7 +96,7 @@ app.get("/api/v1", (req: Request, res: Response) => {
 // API Routes
 import authRoutes from "./routes/auth";
 import companyRoutes from "./routes/companies";
-import userRoutes from "./routes/users";
+import employeeRoutes from "./routes/employees";
 import jobRoutes from "./routes/jobs";
 import candidateRoutes from "./routes/candidates";
 import interviewRoutes from "./routes/interviews";
@@ -104,7 +104,7 @@ import assessmentRoutes from "./routes/assessments";
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/companies", companyRoutes);
-app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/employees", employeeRoutes);
 app.use("/api/v1/jobs", jobRoutes);
 app.use("/api/v1/candidates", candidateRoutes);
 app.use("/api/v1/interviews", interviewRoutes);
@@ -125,7 +125,7 @@ app.use((req: Request, res: Response) => {
       "GET /api/v1",
       "Authentication: /api/v1/auth/*",
       "Companies: /api/v1/companies/*",
-      "Users: /api/v1/users/*",
+      "Employees: /api/v1/employees/*",
       "Jobs: /api/v1/jobs/*",
       "Candidates: /api/v1/candidates/*",
       "Interviews: /api/v1/interviews/*",

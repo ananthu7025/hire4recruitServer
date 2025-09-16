@@ -1,7 +1,7 @@
 import Interview, { IInterview } from '../models/Interview';
 import Candidate from '../models/Candidate';
 import Job from '../models/Job';
-import User from '../models/User';
+import Employee from '../models/Employee';
 import { logger } from '../config/logger';
 import mongoose from 'mongoose';
 
@@ -68,7 +68,7 @@ export class InterviewService {
 
       // Validate all interviewers exist and belong to company
       const interviewerIds = interviewData.interviewers.map(i => i.userId);
-      const interviewers = await User.find({
+      const interviewers = await Employee.find({
         _id: { $in: interviewerIds },
         companyId: new mongoose.Types.ObjectId(companyId),
         isActive: true
@@ -283,7 +283,7 @@ export class InterviewService {
       // If updating interviewers, validate them
       if (updates.interviewers) {
         const interviewerIds = updates.interviewers.map(i => i.userId);
-        const interviewers = await User.find({
+        const interviewers = await Employee.find({
           _id: { $in: interviewerIds },
           companyId: new mongoose.Types.ObjectId(companyId),
           isActive: true

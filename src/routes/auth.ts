@@ -5,7 +5,7 @@ import { ValidationMiddleware } from "../middleware/validation";
 import {
   registerCompanySchema,
   loginSchema,
-  inviteUserSchema,
+  inviteEmployeeSchema,
   acceptInviteSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
@@ -27,7 +27,7 @@ const authenticatedRoute = [
 
 const adminRoute = [
   AuthMiddleware.authenticate,
-  AuthMiddleware.requirePermission("users", "create")
+  AuthMiddleware.requirePermission("employees", "create")
 ];
 
 const rateLimitedRoute = [
@@ -43,7 +43,7 @@ router.post("/logout", authenticatedRoute, AuthController.logout);
 router.get("/profile", authenticatedRoute, AuthController.getProfile);
 
 // Admin routes
-router.post("/invite-user", [...adminRoute, ...validate(inviteUserSchema)], AuthController.inviteUser);
+router.post("/invite-employee", [...adminRoute, ...validate(inviteEmployeeSchema)], AuthController.inviteEmployee);
 
 // Invitation routes
 router.post("/accept-invitation", validate(acceptInviteSchema), AuthController.acceptInvitation);

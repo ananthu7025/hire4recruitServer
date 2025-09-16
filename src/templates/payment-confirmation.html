@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Payment Confirmation - {{companyName}}</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
+  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px;">
+    <!-- Header -->
+    <div style="text-align: center; margin-bottom: 30px;">
+      <h1 style="color: #28a745; margin-bottom: 10px;">✅ Payment Successful!</h1>
+      <h2 style="color: #333; margin: 0;">Welcome to hire4recruit, {{companyName}}!</h2>
+    </div>
+
+    <!-- Success Message -->
+    <div style="background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px; padding: 15px; margin: 20px 0;">
+      <p style="color: #155724; margin: 0; font-weight: bold;">
+        🎉 Your payment has been successfully processed and your subscription is now active!
+      </p>
+    </div>
+
+    <!-- Payment Details -->
+    <div style="background-color: #f8f9fa; padding: 20px; margin: 20px 0; border-radius: 5px; border: 1px solid #e9ecef;">
+      <h3 style="color: #333; margin: 0 0 15px 0;">Payment Details</h3>
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 8px 0; border-bottom: 1px solid #dee2e6; font-weight: bold; color: #495057;">Company:</td>
+          <td style="padding: 8px 0; border-bottom: 1px solid #dee2e6; color: #333;">{{companyName}}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; border-bottom: 1px solid #dee2e6; font-weight: bold; color: #495057;">Plan:</td>
+          <td style="padding: 8px 0; border-bottom: 1px solid #dee2e6; color: #333;">{{subscriptionPlan}} ({{billingInterval}})</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; border-bottom: 1px solid #dee2e6; font-weight: bold; color: #495057;">Amount:</td>
+          <td style="padding: 8px 0; border-bottom: 1px solid #dee2e6; color: #333;">₹{{amount}}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; border-bottom: 1px solid #dee2e6; font-weight: bold; color: #495057;">Payment ID:</td>
+          <td style="padding: 8px 0; border-bottom: 1px solid #dee2e6; color: #333;">{{paymentId}}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; border-bottom: 1px solid #dee2e6; font-weight: bold; color: #495057;">Transaction Date:</td>
+          <td style="padding: 8px 0; border-bottom: 1px solid #dee2e6; color: #333;">{{transactionDate}}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; font-weight: bold; color: #495057;">Next Billing:</td>
+          <td style="padding: 8px 0; color: #333;">{{nextBillingDate}}</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- Subscription Features -->
+    <div style="margin: 25px 0;">
+      <h3 style="color: #333; margin-bottom: 15px;">Your {{subscriptionPlan}} Plan Includes:</h3>
+      <ul style="color: #333; line-height: 1.6; padding-left: 20px;">
+        {{subscriptionFeatures}}
+      </ul>
+    </div>
+
+    <!-- Email Verification Notice (conditionally shown) -->
+    {{emailVerificationSection}}
+
+    <!-- Next Steps -->
+    <div style="background-color: #e7f3ff; border: 1px solid #b8daff; border-radius: 5px; padding: 15px; margin: 20px 0;">
+      <h3 style="color: #004085; margin: 0 0 10px 0;">🚀 Ready to Get Started?</h3>
+      <p style="color: #004085; margin: 0; line-height: 1.6;">
+        Your hire4recruit account is now fully activated! You can start using all the features included in your plan.
+      </p>
+    </div>
+
+    <div style="margin: 30px 0; text-align: center;">
+      <a href="{{loginUrl}}"
+         style="background-color: #007bff; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold; margin-right: 10px;">
+        Access Your Dashboard
+      </a>
+      {{verifyEmailButton}}
+    </div>
+
+    <!-- Support Info -->
+    <div style="margin: 30px 0;">
+      <h3 style="color: #333; margin-bottom: 10px;">Need Help?</h3>
+      <p style="color: #333; line-height: 1.6; margin: 5px 0;">
+        📧 Email: support@hire4recruit.com<br>
+        📞 Phone: +91-XXX-XXX-XXXX<br>
+        🌐 Help Center: help.hire4recruit.com
+      </p>
+    </div>
+
+    <!-- Invoice Attachment Notice -->
+    <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px; padding: 15px; margin: 20px 0;">
+      <p style="color: #856404; margin: 0; font-weight: bold;">
+        📎 Your payment invoice is attached to this email for your records.
+      </p>
+    </div>
+
+    <hr style="margin: 30px 0; border: 0; border-top: 1px solid #eee;">
+
+    <p style="color: #666; font-size: 12px; line-height: 1.4;">
+      This email was sent by hire4recruit. If you have any questions about this payment, please contact our support team.
+      <br><br>
+      Transaction processed securely by Razorpay.
+    </p>
+  </div>
+</body>
+</html>
