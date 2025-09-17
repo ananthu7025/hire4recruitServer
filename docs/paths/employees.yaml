@@ -25,7 +25,7 @@ employees:
           type: string
       - name: search
         in: query
-        description: Search employees by name, email, department, or job title
+        description: Search employees by name, email, department, job title, expertise, or bio
         schema:
           type: string
       - name: sortBy
@@ -84,7 +84,7 @@ employee-search:
     tags:
       - Employees
     summary: Search employees
-    description: Search employees by name, email, department, or job title with advanced filtering options
+    description: Search employees by name, email, department, job title, expertise, or bio with advanced filtering options
     parameters:
       - name: q
         in: query

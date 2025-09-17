@@ -109,7 +109,9 @@ export const inviteEmployeeSchema = z.object({
     department: z.string().max(100, 'Department name is too long').optional(),
     jobTitle: z.string().max(100, 'Job title is too long').optional(),
     phone: phoneSchema,
-    employeeId: z.string().max(50, 'Employee ID is too long').optional()
+    employeeId: z.string().max(50, 'Employee ID is too long').optional(),
+    expertise: z.array(z.string().trim().max(100, 'Expertise item is too long')).max(20, 'Maximum 20 expertise items allowed').optional(),
+    bio: z.string().max(1000, 'Bio must be less than 1000 characters').optional()
   })
 });
 
@@ -175,6 +177,8 @@ export const updateProfileSchema = z.object({
     phone: phoneSchema,
     department: z.string().max(100, 'Department name is too long').optional(),
     jobTitle: z.string().max(100, 'Job title is too long').optional(),
+    expertise: z.array(z.string().trim().max(100, 'Expertise item is too long')).max(20, 'Maximum 20 expertise items allowed').optional(),
+    bio: z.string().max(1000, 'Bio must be less than 1000 characters').optional(),
     preferences: z.object({
       timezone: z.string().optional(),
       language: z.string().regex(/^[a-z]{2}(-[A-Z]{2})?$/, 'Invalid language format').optional(),

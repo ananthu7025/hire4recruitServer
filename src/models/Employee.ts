@@ -25,6 +25,8 @@ export interface IEmployee extends Document {
   department?: string;
   jobTitle?: string;
   employeeId?: string;
+  expertise: string[];
+  bio?: string;
 
   isActive: boolean;
   isDeleted: boolean;
@@ -147,6 +149,15 @@ const EmployeeSchema: Schema = new Schema({
   employeeId: {
     type: String,
     trim: true
+  },
+  expertise: [{
+    type: String,
+    trim: true
+  }],
+  bio: {
+    type: String,
+    trim: true,
+    maxlength: 1000
   },
 
   isActive: {

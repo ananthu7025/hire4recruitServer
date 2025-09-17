@@ -315,6 +315,18 @@ schemas:
       employeeId:
         type: string
         description: Internal employee ID
+      expertise:
+        type: array
+        items:
+          type: string
+        maxItems: 20
+        description: Areas of expertise
+        example: ["JavaScript", "React", "Node.js"]
+      bio:
+        type: string
+        maxLength: 1000
+        description: Employee biography
+        example: "Experienced full-stack developer with expertise in modern web technologies"
       isActive:
         type: boolean
         description: Whether employee is active
@@ -450,6 +462,18 @@ schemas:
         type: string
       employeeId:
         type: string
+      expertise:
+        type: array
+        items:
+          type: string
+        maxItems: 20
+        description: Areas of expertise
+        example: ["JavaScript", "React", "Node.js"]
+      bio:
+        type: string
+        maxLength: 1000
+        description: Employee biography
+        example: "Experienced full-stack developer with expertise in modern web technologies"
       preferences:
         $ref: '#/schemas/EmployeePreferences'
 

@@ -10,6 +10,8 @@ export interface UpdateEmployeeData {
   department?: string;
   jobTitle?: string;
   employeeId?: string;
+  expertise?: string[];
+  bio?: string;
   preferences?: {
     timezone?: string;
     language?: string;
@@ -97,7 +99,9 @@ export class EmployeeService {
           { email: { $regex: search, $options: 'i' } },
           { department: { $regex: search, $options: 'i' } },
           { jobTitle: { $regex: search, $options: 'i' } },
-          { employeeId: { $regex: search, $options: 'i' } }
+          { employeeId: { $regex: search, $options: 'i' } },
+          { expertise: { $in: [new RegExp(search, 'i')] } },
+          { bio: { $regex: search, $options: 'i' } }
         ];
       }
 
@@ -449,7 +453,9 @@ export class EmployeeService {
           { lastName: { $regex: searchTerm, $options: 'i' } },
           { email: { $regex: searchTerm, $options: 'i' } },
           { department: { $regex: searchTerm, $options: 'i' } },
-          { jobTitle: { $regex: searchTerm, $options: 'i' } }
+          { jobTitle: { $regex: searchTerm, $options: 'i' } },
+          { expertise: { $in: [new RegExp(searchTerm, 'i')] } },
+          { bio: { $regex: searchTerm, $options: 'i' } }
         ]
       };
 
