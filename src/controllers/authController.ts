@@ -17,6 +17,7 @@ interface AuthRequest extends Request {
       interviews: { create: boolean; read: boolean; update: boolean; delete: boolean; };
       assessments: { create: boolean; read: boolean; update: boolean; delete: boolean; };
       employees: { create: boolean; read: boolean; update: boolean; delete: boolean; };
+      workflows: { create: boolean; read: boolean; update: boolean; delete: boolean; };
       settings: { read: boolean; update: boolean; };
     };
     userData?: any;

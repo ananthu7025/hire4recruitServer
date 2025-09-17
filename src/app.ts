@@ -102,6 +102,7 @@ import jobRoutes from "./routes/jobs";
 import candidateRoutes from "./routes/candidates";
 import interviewRoutes from "./routes/interviews";
 import assessmentRoutes from "./routes/assessments";
+import workflowRoutes from "./routes/workflows";
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/companies", companyRoutes);
@@ -111,6 +112,7 @@ app.use("/api/v1/jobs", jobRoutes);
 app.use("/api/v1/candidates", candidateRoutes);
 app.use("/api/v1/interviews", interviewRoutes);
 app.use("/api/v1/assessments", assessmentRoutes);
+app.use("/api/v1/workflows", workflowRoutes);
 
 // Setup API documentation
 if (process.env.NODE_ENV !== 'production') {
@@ -133,6 +135,7 @@ app.use((req: Request, res: Response) => {
       "Candidates: /api/v1/candidates/*",
       "Interviews: /api/v1/interviews/*",
       "Assessments: /api/v1/assessments/*",
+      "Workflows: /api/v1/workflows/*",
     ],
   });
 });

@@ -66,7 +66,7 @@ export interface IWorkflow extends Document {
     autoAdvance: boolean;
 
     actions: {
-      type: 'send_email' | 'schedule_interview' | 'assign_assessment' | 'notify_user';
+      type: 'send_email' | 'schedule_interview' | 'assign_assessment' | 'verify_assessment' | "add_calendar_event" | "generate_offer_letter";
       config: any;
       trigger: 'on_enter' | 'on_exit' | 'manual';
 

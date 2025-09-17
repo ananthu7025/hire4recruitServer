@@ -59,6 +59,8 @@ tags:
     description: Interview scheduling and management
   - name: Assessments
     description: Assessment creation and management
+  - name: Workflows
+    description: Workflow management and automation
 
 paths:
   # Health endpoints
@@ -182,6 +184,24 @@ paths:
   # Assessment endpoints
   /assessments:
     $ref: './paths/assessments.yaml#/assessments'
+
+  # Workflow endpoints
+  /workflows:
+    $ref: './paths/workflows.yaml#/workflows'
+  /workflows/stats:
+    $ref: './paths/workflows.yaml#/workflow-stats'
+  /workflows/templates:
+    $ref: './paths/workflows.yaml#/workflow-templates'
+  /workflows/{workflowId}:
+    $ref: './paths/workflows.yaml#/workflow-by-id'
+  /workflows/{workflowId}/clone:
+    $ref: './paths/workflows.yaml#/workflow-clone'
+  /workflows/{workflowId}/optimize:
+    $ref: './paths/workflows.yaml#/workflow-optimize'
+  /workflows/{workflowId}/analytics:
+    $ref: './paths/workflows.yaml#/workflow-analytics'
+  /workflows/{workflowId}/status:
+    $ref: './paths/workflows.yaml#/workflow-status'
 
 components:
   $ref: './components/index.yaml'

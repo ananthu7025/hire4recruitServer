@@ -1,0 +1,496 @@
+# Workflow endpoints
+
+workflows:
+  get:
+    tags:
+      - Workflows
+    summary: Get all workflows
+    description: Get all workflows with filtering and pagination
+    operationId: getWorkflows
+    security:
+      - BearerAuth: []
+    parameters:
+      - $ref: '../components/index.yaml#/parameters/PageParam'
+      - $ref: '../components/index.yaml#/parameters/LimitParam'
+      - name: isTemplate
+        in: query
+        description: Filter by template status
+        schema:
+          type: boolean
+      - name: isActive
+        in: query
+        description: Filter by active status
+        schema:
+          type: boolean
+      - name: search
+        in: query
+        description: Search in workflow names and descriptions
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 100
+    responses:
+      '200':
+        description: Workflows retrieved successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        workflows:
+                          type: array
+                          items:
+                            $ref: '../components/index.yaml#/schemas/Workflow'
+                        total:
+                          type: integer
+                        page:
+                          type: integer
+                        limit:
+                          type: integer
+                        totalPages:
+                          type: integer
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '403':
+        $ref: '../components/index.yaml#/responses/ForbiddenError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+  post:
+    tags:
+      - Workflows
+    summary: Create workflow
+    description: Create a new workflow
+    operationId: createWorkflow
+    security:
+      - BearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/index.yaml#/schemas/CreateWorkflowRequest'
+    responses:
+      '201':
+        description: Workflow created successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/index.yaml#/schemas/Workflow'
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '403':
+        $ref: '../components/index.yaml#/responses/ForbiddenError'
+      '400':
+        $ref: '../components/index.yaml#/responses/ValidationError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+workflow-stats:
+  get:
+    tags:
+      - Workflows
+    summary: Get workflow statistics
+    description: Get workflow usage statistics for the company
+    operationId: getWorkflowStats
+    security:
+      - BearerAuth: []
+    responses:
+      '200':
+        description: Workflow statistics retrieved successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        total:
+                          type: integer
+                          example: 15
+                        active:
+                          type: integer
+                          example: 12
+                        inactive:
+                          type: integer
+                          example: 3
+                        templates:
+                          type: integer
+                          example: 5
+                        averageStages:
+                          type: number
+                          example: 4.2
+                        mostUsedTemplate:
+                          $ref: '../components/index.yaml#/schemas/Workflow'
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '403':
+        $ref: '../components/index.yaml#/responses/ForbiddenError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+workflow-templates:
+  get:
+    tags:
+      - Workflows
+    summary: Get workflow templates
+    description: Get all available workflow templates
+    operationId: getWorkflowTemplates
+    security:
+      - BearerAuth: []
+    responses:
+      '200':
+        description: Workflow templates retrieved successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        templates:
+                          type: array
+                          items:
+                            $ref: '../components/index.yaml#/schemas/Workflow'
+                        total:
+                          type: integer
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '403':
+        $ref: '../components/index.yaml#/responses/ForbiddenError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+workflow-by-id:
+  get:
+    tags:
+      - Workflows
+    summary: Get workflow by ID
+    description: Get a specific workflow by its ID
+    operationId: getWorkflowById
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: workflowId
+        in: path
+        required: true
+        description: Workflow ID
+        schema:
+          type: string
+          format: objectId
+    responses:
+      '200':
+        description: Workflow retrieved successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/index.yaml#/schemas/Workflow'
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '403':
+        $ref: '../components/index.yaml#/responses/ForbiddenError'
+      '404':
+        $ref: '../components/index.yaml#/responses/NotFoundError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+  put:
+    tags:
+      - Workflows
+    summary: Update workflow
+    description: Update an existing workflow
+    operationId: updateWorkflow
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: workflowId
+        in: path
+        required: true
+        description: Workflow ID
+        schema:
+          type: string
+          format: objectId
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/index.yaml#/schemas/UpdateWorkflowRequest'
+    responses:
+      '200':
+        description: Workflow updated successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/index.yaml#/schemas/Workflow'
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '403':
+        $ref: '../components/index.yaml#/responses/ForbiddenError'
+      '404':
+        $ref: '../components/index.yaml#/responses/NotFoundError'
+      '400':
+        $ref: '../components/index.yaml#/responses/ValidationError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+  delete:
+    tags:
+      - Workflows
+    summary: Delete workflow
+    description: Delete a workflow by its ID (soft delete)
+    operationId: deleteWorkflow
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: workflowId
+        in: path
+        required: true
+        description: Workflow ID
+        schema:
+          type: string
+          format: objectId
+    responses:
+      '200':
+        description: Workflow deleted successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../components/index.yaml#/schemas/SuccessResponse'
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '403':
+        $ref: '../components/index.yaml#/responses/ForbiddenError'
+      '404':
+        $ref: '../components/index.yaml#/responses/NotFoundError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+workflow-clone:
+  post:
+    tags:
+      - Workflows
+    summary: Clone workflow
+    description: Create a copy of an existing workflow
+    operationId: cloneWorkflow
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: workflowId
+        in: path
+        required: true
+        description: Workflow ID to clone
+        schema:
+          type: string
+          format: objectId
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            $ref: '../components/index.yaml#/schemas/CloneWorkflowRequest'
+    responses:
+      '201':
+        description: Workflow cloned successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/index.yaml#/schemas/Workflow'
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '403':
+        $ref: '../components/index.yaml#/responses/ForbiddenError'
+      '404':
+        $ref: '../components/index.yaml#/responses/NotFoundError'
+      '400':
+        $ref: '../components/index.yaml#/responses/ValidationError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+workflow-optimize:
+  post:
+    tags:
+      - Workflows
+    summary: Optimize workflow with AI
+    description: Use AI to analyze and optimize the workflow
+    operationId: optimizeWorkflow
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: workflowId
+        in: path
+        required: true
+        description: Workflow ID to optimize
+        schema:
+          type: string
+          format: objectId
+    responses:
+      '200':
+        description: Workflow optimized successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/index.yaml#/schemas/Workflow'
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '403':
+        $ref: '../components/index.yaml#/responses/ForbiddenError'
+      '404':
+        $ref: '../components/index.yaml#/responses/NotFoundError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+workflow-analytics:
+  get:
+    tags:
+      - Workflows
+    summary: Get workflow analytics
+    description: Get detailed analytics for a specific workflow
+    operationId: getWorkflowAnalytics
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: workflowId
+        in: path
+        required: true
+        description: Workflow ID
+        schema:
+          type: string
+          format: objectId
+    responses:
+      '200':
+        description: Workflow analytics retrieved successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: object
+                      properties:
+                        overview:
+                          type: object
+                          properties:
+                            totalJobs:
+                              type: integer
+                              example: 25
+                            usageCount:
+                              type: integer
+                              example: 150
+                            isOptimized:
+                              type: boolean
+                              example: true
+                            lastOptimized:
+                              type: string
+                              format: date-time
+                        performance:
+                          $ref: '../components/index.yaml#/schemas/WorkflowAnalytics'
+                        predictions:
+                          type: object
+                        stageAnalytics:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              stageId:
+                                type: string
+                              name:
+                                type: string
+                              type:
+                                type: string
+                              analytics:
+                                type: object
+                              successPrediction:
+                                type: object
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '403':
+        $ref: '../components/index.yaml#/responses/ForbiddenError'
+      '404':
+        $ref: '../components/index.yaml#/responses/NotFoundError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+workflow-status:
+  patch:
+    tags:
+      - Workflows
+    summary: Toggle workflow status
+    description: Activate or deactivate a workflow
+    operationId: toggleWorkflowStatus
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: workflowId
+        in: path
+        required: true
+        description: Workflow ID
+        schema:
+          type: string
+          format: objectId
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/index.yaml#/schemas/ToggleWorkflowStatusRequest'
+    responses:
+      '200':
+        description: Workflow status updated successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/index.yaml#/schemas/Workflow'
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '403':
+        $ref: '../components/index.yaml#/responses/ForbiddenError'
+      '404':
+        $ref: '../components/index.yaml#/responses/NotFoundError'
+      '400':
+        $ref: '../components/index.yaml#/responses/ValidationError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'

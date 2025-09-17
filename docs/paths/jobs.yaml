@@ -17,7 +17,7 @@ jobs:
         description: Job status filter
         schema:
           type: string
-          enum: [draft, active, paused, closed]
+          enum: [active, draft, closed, onhold]
       - name: department
         in: query
         description: Department filter
@@ -62,37 +62,7 @@ jobs:
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              title:
-                type: string
-                maxLength: 200
-              description:
-                type: string
-              department:
-                type: string
-              location:
-                $ref: '../components/index.yaml#/schemas/JobLocation'
-              employment:
-                $ref: '../components/index.yaml#/schemas/Employment'
-              salary:
-                $ref: '../components/index.yaml#/schemas/Salary'
-              requirements:
-                $ref: '../components/index.yaml#/schemas/JobRequirements'
-              benefits:
-                type: array
-                items:
-                  type: string
-              urgency:
-                type: string
-                enum: [low, medium, high]
-                default: medium
-            required:
-              - title
-              - description
-              - department
-              - location
-              - employment
+            $ref: '../components/index.yaml#/schemas/CreateJobRequest'
     responses:
       '201':
         description: Job created successfully
@@ -114,6 +84,118 @@ jobs:
       '500':
         $ref: '../components/index.yaml#/responses/InternalServerError'
 
+job-by-id:
+  get:
+    tags:
+      - Jobs
+    summary: Get job by ID
+    description: Get a specific job by its ID
+    operationId: getJobById
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: jobId
+        in: path
+        required: true
+        description: Job ID
+        schema:
+          type: string
+    responses:
+      '200':
+        description: Job retrieved successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/index.yaml#/schemas/Job'
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '403':
+        $ref: '../components/index.yaml#/responses/ForbiddenError'
+      '404':
+        $ref: '../components/index.yaml#/responses/NotFoundError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+  put:
+    tags:
+      - Jobs
+    summary: Update job
+    description: Update an existing job
+    operationId: updateJob
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: jobId
+        in: path
+        required: true
+        description: Job ID
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/index.yaml#/schemas/UpdateJobRequest'
+    responses:
+      '200':
+        description: Job updated successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/index.yaml#/schemas/Job'
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '403':
+        $ref: '../components/index.yaml#/responses/ForbiddenError'
+      '404':
+        $ref: '../components/index.yaml#/responses/NotFoundError'
+      '400':
+        $ref: '../components/index.yaml#/responses/ValidationError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+  delete:
+    tags:
+      - Jobs
+    summary: Delete job
+    description: Delete a job by its ID
+    operationId: deleteJob
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: jobId
+        in: path
+        required: true
+        description: Job ID
+        schema:
+          type: string
+    responses:
+      '200':
+        description: Job deleted successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../components/index.yaml#/schemas/SuccessResponse'
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '403':
+        $ref: '../components/index.yaml#/responses/ForbiddenError'
+      '404':
+        $ref: '../components/index.yaml#/responses/NotFoundError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
 # Additional endpoints would be defined here for:
-# - search-by-skills, stats, job-by-id, publish, clone, analytics, applications
+# - search-by-skills, stats, publish, clone, analytics, applications
 # Following the same pattern as above

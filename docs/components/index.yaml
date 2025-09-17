@@ -668,39 +668,174 @@ schemas:
       _id:
         type: string
         format: objectId
+      jobId:
+        type: string
+        example: "JOB-1640995200000-A1B2C3D4"
+        description: "Unique job identifier"
       companyId:
         type: string
         format: objectId
       title:
         type: string
-        maxLength: 200
-      description:
-        type: string
+        example: "Senior Software Engineer"
+        maxLength: 100
       department:
         type: string
+        example: "Engineering"
+        maxLength: 50
       location:
-        $ref: '#/schemas/JobLocation'
-      employment:
-        $ref: '#/schemas/Employment'
+        type: string
+        example: "San Francisco, CA, USA"
+      country:
+        type: string
+        example: "USA"
+      state:
+        type: string
+        example: "CA"
+      city:
+        type: string
+        example: "San Francisco"
       salary:
-        $ref: '#/schemas/Salary'
-      requirements:
-        $ref: '#/schemas/JobRequirements'
-      benefits:
-        type: array
-        items:
-          type: string
-      status:
+        type: object
+        properties:
+          min:
+            type: number
+            example: 100000
+          max:
+            type: number
+            example: 150000
+          currency:
+            type: string
+            example: "USD"
+          payRate:
+            type: string
+            enum: [hourly, daily, annual]
+            example: "annual"
+        required:
+          - min
+          - max
+          - currency
+          - payRate
+      type:
         type: string
-        enum: [draft, active, paused, closed]
-        default: draft
-      urgency:
-        type: string
-        enum: [low, medium, high]
-        default: medium
+        enum: [fulltime, parttime, contract, internship]
+        example: "fulltime"
       hiringManager:
         type: string
         format: objectId
+        description: "User ID of the hiring manager"
+      targetClosingDate:
+        type: string
+        format: date-time
+        example: "2024-03-01T23:59:59Z"
+      clientName:
+        type: string
+        example: "TechCorp Inc."
+      accountManager:
+        type: string
+        format: objectId
+      contactPerson:
+        type: string
+        example: "Jane Smith"
+      workMode:
+        type: string
+        enum: [remote, hybrid, onsite]
+        example: "hybrid"
+      workExperience:
+        type: string
+        example: "5+ years"
+      educationRequirement:
+        type: string
+        example: "Bachelor's degree in Computer Science or related field"
+      skillsRequired:
+        type: array
+        items:
+          type: string
+        example: ["JavaScript", "Node.js", "React", "MongoDB"]
+      preferredSkills:
+        type: array
+        items:
+          type: string
+        example: ["TypeScript", "AWS", "Docker"]
+      benefits:
+        type: string
+        example: "Health insurance, 401k, flexible PTO, remote work"
+      employmentType:
+        type: string
+        example: "Full-time"
+      workflowId:
+        type: string
+        format: objectId
+        description: "Associated workflow ID"
+      jobSummary:
+        type: string
+        example: "We are seeking a Senior Software Engineer to join our team"
+        maxLength: 1000
+      jobDescription:
+        type: string
+        example: "Join our engineering team to build next-generation AI products"
+        maxLength: 5000
+      requirements:
+        type: string
+        example: "5+ years of software development experience. Proficiency in JavaScript, Node.js, React"
+        maxLength: 3000
+      expectedRevenue:
+        type: number
+        example: 25000
+      probabilityOfClosure:
+        type: string
+        example: "high"
+      numberOfOpenings:
+        type: number
+        example: 2
+        minimum: 1
+      notes:
+        type: string
+        example: "Urgent requirement for Q1 project"
+      tags:
+        type: string
+        example: "urgent,remote,senior"
+      customFields:
+        type: array
+        items:
+          type: object
+          properties:
+            fieldName:
+              type: string
+              example: "Project Code"
+            fieldType:
+              type: string
+              enum: [text, number, date, select, multiselect]
+              example: "text"
+            fieldValue:
+              type: string
+              example: "PROJ-2024-001"
+            isRequired:
+              type: boolean
+              example: false
+      templateUsed:
+        type: string
+        example: "software-engineer-template"
+      generateWithAI:
+        type: boolean
+        example: true
+      status:
+        type: string
+        enum: [active, draft, closed, onhold]
+        default: draft
+        example: "active"
+      aiGenerated:
+        type: object
+        properties:
+          jobDescriptionGenerated:
+            type: boolean
+            example: true
+          requirementsGenerated:
+            type: boolean
+            example: true
+          summaryGenerated:
+            type: boolean
+            example: false
       createdBy:
         type: string
         format: objectId
@@ -716,10 +851,806 @@ schemas:
     required:
       - companyId
       - title
-      - description
       - department
       - location
-      - employment
+      - country
+      - state
+      - city
+      - salary
+      - type
+      - hiringManager
+      - workMode
+      - workExperience
+      - skillsRequired
+      - workflowId
+
+  CreateJobRequest:
+    type: object
+    properties:
+      title:
+        type: string
+        example: "Senior Software Engineer"
+        minLength: 1
+        maxLength: 100
+      department:
+        type: string
+        example: "Engineering"
+        maxLength: 50
+      location:
+        type: string
+        example: "San Francisco, CA, USA"
+      country:
+        type: string
+        example: "USA"
+      state:
+        type: string
+        example: "CA"
+      city:
+        type: string
+        example: "San Francisco"
+      salary:
+        type: object
+        properties:
+          min:
+            type: number
+            example: 100000
+          max:
+            type: number
+            example: 150000
+          currency:
+            type: string
+            example: "USD"
+          payRate:
+            type: string
+            enum: [hourly, daily, annual]
+            example: "annual"
+        required:
+          - min
+          - max
+          - currency
+          - payRate
+      type:
+        type: string
+        enum: [fulltime, parttime, contract, internship]
+        example: "fulltime"
+      hiringManager:
+        type: string
+        format: objectId
+        description: "User ID of the hiring manager"
+      targetClosingDate:
+        type: string
+        format: date-time
+        example: "2024-03-01T23:59:59Z"
+      clientName:
+        type: string
+        example: "TechCorp Inc."
+      accountManager:
+        type: string
+        format: objectId
+      contactPerson:
+        type: string
+        example: "Jane Smith"
+      workMode:
+        type: string
+        enum: [remote, hybrid, onsite]
+        example: "hybrid"
+      workExperience:
+        type: string
+        example: "5+ years"
+      educationRequirement:
+        type: string
+        example: "Bachelor's degree in Computer Science or related field"
+      skillsRequired:
+        type: array
+        items:
+          type: string
+        example: ["JavaScript", "Node.js", "React", "MongoDB"]
+      preferredSkills:
+        type: array
+        items:
+          type: string
+        example: ["TypeScript", "AWS", "Docker"]
+      benefits:
+        type: string
+        example: "Health insurance, 401k, flexible PTO, remote work"
+      employmentType:
+        type: string
+        example: "Full-time"
+      workflowId:
+        type: string
+        format: objectId
+        description: "Associated workflow ID"
+      jobSummary:
+        type: string
+        example: "We are seeking a Senior Software Engineer to join our team"
+        maxLength: 1000
+      jobDescription:
+        type: string
+        example: "Join our engineering team to build next-generation AI products"
+        maxLength: 5000
+      requirements:
+        type: string
+        example: "5+ years of software development experience. Proficiency in JavaScript, Node.js, React"
+        maxLength: 3000
+      expectedRevenue:
+        type: number
+        example: 25000
+      probabilityOfClosure:
+        type: string
+        example: "high"
+      numberOfOpenings:
+        type: number
+        example: 2
+        minimum: 1
+      notes:
+        type: string
+        example: "Urgent requirement for Q1 project"
+      tags:
+        type: string
+        example: "urgent,remote,senior"
+      customFields:
+        type: array
+        items:
+          type: object
+          properties:
+            fieldName:
+              type: string
+              example: "Project Code"
+            fieldType:
+              type: string
+              enum: [text, number, date, select, multiselect]
+              example: "text"
+            fieldValue:
+              type: string
+              example: "PROJ-2024-001"
+            isRequired:
+              type: boolean
+              example: false
+      templateUsed:
+        type: string
+        example: "software-engineer-template"
+      generateWithAI:
+        type: boolean
+        example: true
+    required:
+      - title
+      - department
+      - location
+      - country
+      - state
+      - city
+      - salary
+      - type
+      - hiringManager
+      - workMode
+      - workExperience
+      - skillsRequired
+      - workflowId
+
+  UpdateJobRequest:
+    type: object
+    properties:
+      title:
+        type: string
+        example: "Senior Software Engineer"
+        minLength: 1
+        maxLength: 100
+      department:
+        type: string
+        example: "Engineering"
+        maxLength: 50
+      location:
+        type: string
+        example: "San Francisco, CA, USA"
+      country:
+        type: string
+        example: "USA"
+      state:
+        type: string
+        example: "CA"
+      city:
+        type: string
+        example: "San Francisco"
+      salary:
+        type: object
+        properties:
+          min:
+            type: number
+            example: 100000
+          max:
+            type: number
+            example: 150000
+          currency:
+            type: string
+            example: "USD"
+          payRate:
+            type: string
+            enum: [hourly, daily, annual]
+            example: "annual"
+      type:
+        type: string
+        enum: [fulltime, parttime, contract, internship]
+        example: "fulltime"
+      hiringManager:
+        type: string
+        format: objectId
+        description: "User ID of the hiring manager"
+      targetClosingDate:
+        type: string
+        format: date-time
+        example: "2024-03-01T23:59:59Z"
+      clientName:
+        type: string
+        example: "TechCorp Inc."
+      accountManager:
+        type: string
+        format: objectId
+      contactPerson:
+        type: string
+        example: "Jane Smith"
+      workMode:
+        type: string
+        enum: [remote, hybrid, onsite]
+        example: "hybrid"
+      workExperience:
+        type: string
+        example: "5+ years"
+      educationRequirement:
+        type: string
+        example: "Bachelor's degree in Computer Science or related field"
+      skillsRequired:
+        type: array
+        items:
+          type: string
+        example: ["JavaScript", "Node.js", "React", "MongoDB"]
+      preferredSkills:
+        type: array
+        items:
+          type: string
+        example: ["TypeScript", "AWS", "Docker"]
+      benefits:
+        type: string
+        example: "Health insurance, 401k, flexible PTO, remote work"
+      employmentType:
+        type: string
+        example: "Full-time"
+      workflowId:
+        type: string
+        format: objectId
+        description: "Associated workflow ID"
+      jobSummary:
+        type: string
+        example: "We are seeking a Senior Software Engineer to join our team"
+        maxLength: 1000
+      jobDescription:
+        type: string
+        example: "Join our engineering team to build next-generation AI products"
+        maxLength: 5000
+      requirements:
+        type: string
+        example: "5+ years of software development experience. Proficiency in JavaScript, Node.js, React"
+        maxLength: 3000
+      expectedRevenue:
+        type: number
+        example: 25000
+      probabilityOfClosure:
+        type: string
+        example: "high"
+      numberOfOpenings:
+        type: number
+        example: 2
+        minimum: 1
+      notes:
+        type: string
+        example: "Urgent requirement for Q1 project"
+      tags:
+        type: string
+        example: "urgent,remote,senior"
+      customFields:
+        type: array
+        items:
+          type: object
+          properties:
+            fieldName:
+              type: string
+              example: "Project Code"
+            fieldType:
+              type: string
+              enum: [text, number, date, select, multiselect]
+              example: "text"
+            fieldValue:
+              type: string
+              example: "PROJ-2024-001"
+            isRequired:
+              type: boolean
+              example: false
+      templateUsed:
+        type: string
+        example: "software-engineer-template"
+      generateWithAI:
+        type: boolean
+        example: true
+      status:
+        type: string
+        enum: [active, draft, closed, onhold]
+        example: "active"
+
+  # Workflow schemas
+  Workflow:
+    type: object
+    properties:
+      _id:
+        type: string
+        format: objectId
+      companyId:
+        type: string
+        format: objectId
+      name:
+        type: string
+        example: "Standard Hiring Process"
+        maxLength: 100
+      description:
+        type: string
+        example: "Our standard hiring workflow for software engineers"
+        maxLength: 500
+      isTemplate:
+        type: boolean
+        example: false
+      isActive:
+        type: boolean
+        example: true
+      stages:
+        type: array
+        items:
+          $ref: '#/schemas/WorkflowStage'
+      aiOptimizations:
+        $ref: '#/schemas/AIOptimizations'
+      workflowAnalytics:
+        $ref: '#/schemas/WorkflowAnalytics'
+      jobs:
+        type: array
+        items:
+          type: string
+          format: objectId
+      usageCount:
+        type: integer
+        example: 15
+      isDeleted:
+        type: boolean
+        example: false
+      deletedAt:
+        type: string
+        format: date-time
+      deletedBy:
+        type: string
+        format: objectId
+      createdBy:
+        type: string
+        format: objectId
+      createdAt:
+        type: string
+        format: date-time
+      updatedAt:
+        type: string
+        format: date-time
+    required:
+      - companyId
+      - name
+      - stages
+      - createdBy
+
+  WorkflowStage:
+    type: object
+    properties:
+      stageId:
+        type: string
+        example: "stage-1640995200000-A1B2C3D4"
+      name:
+        type: string
+        example: "Initial Screening"
+        maxLength: 100
+      type:
+        type: string
+        enum: [screening, interview, assessment, review, offer, custom]
+        example: "screening"
+      order:
+        type: integer
+        minimum: 1
+        example: 1
+      isRequired:
+        type: boolean
+        example: true
+      estimatedDuration:
+        type: integer
+        minimum: 1
+        maximum: 365
+        example: 3
+      autoAdvance:
+        type: boolean
+        example: false
+      actions:
+        type: array
+        items:
+          $ref: '#/schemas/StageAction'
+      requirements:
+        type: array
+        items:
+          $ref: '#/schemas/StageRequirement'
+      aiIntelligence:
+        $ref: '#/schemas/StageAIIntelligence'
+    required:
+      - name
+      - type
+      - order
+
+  StageAction:
+    type: object
+    properties:
+      type:
+        type: string
+        enum: [send_email, schedule_interview, assign_assessment, verify_assessment, add_calendar_event, generate_offer_letter]
+        example: "send_email"
+      config:
+        type: object
+        example: {"template": "screening_email", "subject": "Application Received"}
+      trigger:
+        type: string
+        enum: [on_enter, on_exit, manual]
+        example: "on_enter"
+      aiEnhanced:
+        type: object
+        properties:
+          personalizeContent:
+            type: boolean
+            example: false
+          optimizeTiming:
+            type: boolean
+            example: false
+          adaptToCandidate:
+            type: boolean
+            example: false
+    required:
+      - type
+      - config
+      - trigger
+
+  StageRequirement:
+    type: object
+    properties:
+      type:
+        type: string
+        enum: [interview_complete, assessment_passed, manual_approval, ai_screening_passed]
+        example: "manual_approval"
+      config:
+        type: object
+        example: {"approvers": ["60a4d2f8b4567123abc"], "requireAllApprovals": false}
+    required:
+      - type
+
+  StageAIIntelligence:
+    type: object
+    properties:
+      successPrediction:
+        type: object
+        properties:
+          candidatePassRate:
+            type: number
+            example: 0.75
+          avgTimeInStage:
+            type: number
+            example: 3
+          commonReasons:
+            type: array
+            items:
+              type: string
+            example: ["Lack of experience", "Skills mismatch"]
+          improvementSuggestions:
+            type: array
+            items:
+              type: string
+            example: ["Add skill assessment", "Improve job description"]
+      automatedScreening:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+            example: false
+          criteria:
+            type: object
+            properties:
+              skillRequirements:
+                type: array
+                items:
+                  type: string
+                example: ["JavaScript", "React"]
+              experienceLevel:
+                type: string
+                enum: [entry, mid, senior, executive]
+                example: "mid"
+              cultureFitIndicators:
+                type: array
+                items:
+                  type: string
+                example: ["Team collaboration", "Remote work"]
+              minimumScore:
+                type: number
+                minimum: 0
+                maximum: 100
+                example: 70
+          aiModel:
+            type: string
+            enum: [gemini-pro, custom]
+            example: "gemini-pro"
+      analytics:
+        type: object
+        properties:
+          totalCandidatesProcessed:
+            type: integer
+            example: 150
+          avgProcessingTime:
+            type: number
+            example: 24
+          candidateDropoffRate:
+            type: number
+            example: 0.15
+          satisfactionScore:
+            type: number
+            example: 4.2
+
+  AIOptimizations:
+    type: object
+    properties:
+      optimized:
+        type: boolean
+        example: true
+      optimizationResults:
+        type: object
+        properties:
+          suggestedImprovements:
+            type: array
+            items:
+              type: string
+            example: ["Add automated skill screening", "Reduce interview rounds"]
+          bottleneckStages:
+            type: array
+            items:
+              type: string
+            example: ["technical_interview", "reference_check"]
+          recommendedTimelines:
+            type: array
+            items:
+              type: object
+              properties:
+                stageId:
+                  type: string
+                currentAvgDays:
+                  type: number
+                recommendedDays:
+                  type: number
+                reasoning:
+                  type: string
+          predictedSuccessRate:
+            type: number
+            example: 0.85
+          complianceRecommendations:
+            type: array
+            items:
+              type: string
+          diversityOptimizations:
+            type: array
+            items:
+              type: string
+          optimizedAt:
+            type: string
+            format: date-time
+          aiConfidence:
+            type: number
+            example: 0.92
+      lastOptimized:
+        type: string
+        format: date-time
+
+  WorkflowAnalytics:
+    type: object
+    properties:
+      performance:
+        type: object
+        properties:
+          avgTimeToHire:
+            type: number
+            example: 30
+          candidateExperience:
+            type: number
+            example: 4.5
+          hiringManagerSatisfaction:
+            type: number
+            example: 4.2
+          costPerHire:
+            type: number
+            example: 5000
+          qualityOfHire:
+            type: number
+            example: 4.0
+      predictions:
+        type: object
+        properties:
+          expectedTimeToFill:
+            type: number
+            example: 45
+          candidateDropoffRisk:
+            type: number
+            example: 0.3
+          diversityProjection:
+            type: object
+            properties:
+              expectedDiversityScore:
+                type: number
+                example: 0.6
+              improvementRecommendations:
+                type: array
+                items:
+                  type: string
+      lastAnalyzed:
+        type: string
+        format: date-time
+
+  CreateWorkflowRequest:
+    type: object
+    properties:
+      name:
+        type: string
+        example: "Standard Hiring Process"
+        minLength: 1
+        maxLength: 100
+      description:
+        type: string
+        example: "Our standard hiring workflow for software engineers"
+        maxLength: 500
+      isTemplate:
+        type: boolean
+        example: false
+      stages:
+        type: array
+        items:
+          type: object
+          properties:
+            name:
+              type: string
+              example: "Initial Screening"
+              maxLength: 100
+            type:
+              type: string
+              enum: [screening, interview, assessment, review, offer, custom]
+              example: "screening"
+            order:
+              type: integer
+              minimum: 1
+              example: 1
+            isRequired:
+              type: boolean
+              example: true
+            estimatedDuration:
+              type: integer
+              minimum: 1
+              maximum: 365
+              example: 3
+            autoAdvance:
+              type: boolean
+              example: false
+            actions:
+              type: array
+              items:
+                $ref: '#/schemas/StageAction'
+            requirements:
+              type: array
+              items:
+                $ref: '#/schemas/StageRequirement'
+            aiIntelligence:
+              type: object
+              properties:
+                automatedScreening:
+                  type: object
+                  properties:
+                    enabled:
+                      type: boolean
+                      example: false
+                    criteria:
+                      type: object
+                      properties:
+                        skillRequirements:
+                          type: array
+                          items:
+                            type: string
+                        experienceLevel:
+                          type: string
+                          enum: [entry, mid, senior, executive]
+                        cultureFitIndicators:
+                          type: array
+                          items:
+                            type: string
+                        minimumScore:
+                          type: number
+                          minimum: 0
+                          maximum: 100
+                    aiModel:
+                      type: string
+                      enum: [gemini-pro, custom]
+          required:
+            - name
+            - type
+            - order
+        minItems: 1
+    required:
+      - name
+      - stages
+
+  UpdateWorkflowRequest:
+    type: object
+    properties:
+      name:
+        type: string
+        example: "Updated Hiring Process"
+        minLength: 1
+        maxLength: 100
+      description:
+        type: string
+        example: "Updated description"
+        maxLength: 500
+      isTemplate:
+        type: boolean
+        example: false
+      isActive:
+        type: boolean
+        example: true
+      stages:
+        type: array
+        items:
+          type: object
+          properties:
+            name:
+              type: string
+              maxLength: 100
+            type:
+              type: string
+              enum: [screening, interview, assessment, review, offer, custom]
+            order:
+              type: integer
+              minimum: 1
+            isRequired:
+              type: boolean
+            estimatedDuration:
+              type: integer
+              minimum: 1
+              maximum: 365
+            autoAdvance:
+              type: boolean
+            actions:
+              type: array
+              items:
+                $ref: '#/schemas/StageAction'
+            requirements:
+              type: array
+              items:
+                $ref: '#/schemas/StageRequirement'
+        minItems: 1
+
+  CloneWorkflowRequest:
+    type: object
+    properties:
+      name:
+        type: string
+        example: "Cloned Workflow"
+        minLength: 1
+        maxLength: 100
+
+  ToggleWorkflowStatusRequest:
+    type: object
+    properties:
+      isActive:
+        type: boolean
+        example: true
+    required:
+      - isActive
 
   JobLocation:
     type: object

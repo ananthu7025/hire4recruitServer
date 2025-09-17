@@ -203,12 +203,25 @@
  *       required:
  *         - title
  *         - department
+ *         - location
+ *         - country
+ *         - state
+ *         - city
+ *         - salary
  *         - type
- *         - status
+ *         - hiringManager
+ *         - workMode
+ *         - workExperience
+ *         - skillsRequired
+ *         - workflowId
  *       properties:
  *         id:
  *           type: string
  *           example: "507f1f77bcf86cd799439011"
+ *         jobId:
+ *           type: string
+ *           example: "JOB-1640995200000-A1B2C3D4"
+ *           description: "Unique job identifier"
  *         title:
  *           type: string
  *           example: "Senior Software Engineer"
@@ -218,78 +231,25 @@
  *           type: string
  *           example: "Engineering"
  *           maxLength: 50
- *         type:
- *           type: string
- *           enum: [full-time, part-time, contract, internship, freelance]
- *           example: "full-time"
- *         workMode:
- *           type: string
- *           enum: [remote, onsite, hybrid]
- *           example: "hybrid"
  *         location:
- *           type: object
- *           properties:
- *             city:
- *               type: string
- *               example: "San Francisco"
- *             state:
- *               type: string
- *               example: "CA"
- *             country:
- *               type: string
- *               example: "USA"
- *             remote:
- *               type: boolean
- *               example: true
- *         description:
  *           type: string
- *           example: "Join our engineering team to build next-generation AI products"
- *           maxLength: 5000
- *         requirements:
- *           type: array
- *           items:
- *             type: string
- *           example:
- *             - "5+ years of software development experience"
- *             - "Proficiency in JavaScript, Node.js, React"
- *             - "Experience with cloud platforms (AWS, GCP)"
- *         responsibilities:
- *           type: array
- *           items:
- *             type: string
- *           example:
- *             - "Design and develop scalable web applications"
- *             - "Collaborate with cross-functional teams"
- *             - "Mentor junior developers"
- *         benefits:
- *           type: array
- *           items:
- *             type: string
- *           example:
- *             - "Competitive salary and equity"
- *             - "Health, dental, and vision insurance"
- *             - "Flexible PTO"
- *         skills:
- *           type: array
- *           items:
- *             type: object
- *             properties:
- *               name:
- *                 type: string
- *               level:
- *                 type: string
- *                 enum: [beginner, intermediate, advanced, expert]
- *               required:
- *                 type: boolean
- *           example:
- *             - name: "JavaScript"
- *               level: "advanced"
- *               required: true
- *             - name: "React"
- *               level: "intermediate"
- *               required: true
- *         salaryRange:
+ *           example: "San Francisco, CA, USA"
+ *         country:
+ *           type: string
+ *           example: "USA"
+ *         state:
+ *           type: string
+ *           example: "CA"
+ *         city:
+ *           type: string
+ *           example: "San Francisco"
+ *         salary:
  *           type: object
+ *           required:
+ *             - min
+ *             - max
+ *             - currency
+ *             - payRate
  *           properties:
  *             min:
  *               type: number
@@ -300,52 +260,130 @@
  *             currency:
  *               type: string
  *               example: "USD"
- *             equity:
- *               type: object
- *               properties:
- *                 min:
- *                   type: number
- *                   example: 0.1
- *                 max:
- *                   type: number
- *                   example: 0.5
- *         status:
+ *             payRate:
+ *               type: string
+ *               enum: [hourly, daily, annual]
+ *               example: "annual"
+ *         type:
  *           type: string
- *           enum: [draft, published, paused, closed, archived]
- *           default: draft
- *           example: "published"
- *         priority:
- *           type: string
- *           enum: [low, medium, high, urgent]
- *           default: medium
- *           example: "high"
+ *           enum: [fulltime, parttime, contract, internship]
+ *           example: "fulltime"
  *         hiringManager:
  *           type: string
  *           example: "507f1f77bcf86cd799439011"
  *           description: "User ID of the hiring manager"
- *         recruiters:
- *           type: array
- *           items:
- *             type: string
- *           example: ["507f1f77bcf86cd799439011", "507f1f77bcf86cd799439012"]
- *         interviewers:
- *           type: array
- *           items:
- *             type: string
- *           example: ["507f1f77bcf86cd799439011", "507f1f77bcf86cd799439012"]
- *         applicationDeadline:
+ *         targetClosingDate:
  *           type: string
  *           format: date-time
  *           example: "2024-03-01T23:59:59Z"
- *         startDate:
+ *         clientName:
  *           type: string
- *           format: date
- *           example: "2024-04-01"
- *         numberOfPositions:
- *           type: integer
- *           minimum: 1
- *           default: 1
+ *           example: "TechCorp Inc."
+ *         accountManager:
+ *           type: string
+ *           example: "507f1f77bcf86cd799439011"
+ *         contactPerson:
+ *           type: string
+ *           example: "Jane Smith"
+ *         workMode:
+ *           type: string
+ *           enum: [remote, hybrid, onsite]
+ *           example: "hybrid"
+ *         workExperience:
+ *           type: string
+ *           example: "5+ years"
+ *         educationRequirement:
+ *           type: string
+ *           example: "Bachelor's degree in Computer Science or related field"
+ *         skillsRequired:
+ *           type: array
+ *           items:
+ *             type: string
+ *           example: ["JavaScript", "Node.js", "React", "MongoDB"]
+ *         preferredSkills:
+ *           type: array
+ *           items:
+ *             type: string
+ *           example: ["TypeScript", "AWS", "Docker"]
+ *         benefits:
+ *           type: string
+ *           example: "Health insurance, 401k, flexible PTO, remote work"
+ *         employmentType:
+ *           type: string
+ *           example: "Full-time"
+ *         workflowId:
+ *           type: string
+ *           example: "507f1f77bcf86cd799439011"
+ *           description: "Associated workflow ID"
+ *         jobSummary:
+ *           type: string
+ *           example: "We are seeking a Senior Software Engineer to join our team"
+ *           maxLength: 1000
+ *         jobDescription:
+ *           type: string
+ *           example: "Join our engineering team to build next-generation AI products"
+ *           maxLength: 5000
+ *         requirements:
+ *           type: string
+ *           example: "5+ years of software development experience. Proficiency in JavaScript, Node.js, React"
+ *           maxLength: 3000
+ *         expectedRevenue:
+ *           type: number
+ *           example: 25000
+ *         probabilityOfClosure:
+ *           type: string
+ *           example: "high"
+ *         numberOfOpenings:
+ *           type: number
  *           example: 2
+ *           minimum: 1
+ *         notes:
+ *           type: string
+ *           example: "Urgent requirement for Q1 project"
+ *         tags:
+ *           type: string
+ *           example: "urgent,remote,senior"
+ *         customFields:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               fieldName:
+ *                 type: string
+ *                 example: "Project Code"
+ *               fieldType:
+ *                 type: string
+ *                 enum: [text, number, date, select, multiselect]
+ *                 example: "text"
+ *               fieldValue:
+ *                 type: string
+ *                 example: "PROJ-2024-001"
+ *               isRequired:
+ *                 type: boolean
+ *                 example: false
+ *         templateUsed:
+ *           type: string
+ *           example: "software-engineer-template"
+ *         generateWithAI:
+ *           type: boolean
+ *           example: true
+ *         status:
+ *           type: string
+ *           enum: [active, draft, closed, onhold]
+ *           default: draft
+ *           example: "active"
+ *         aiGenerated:
+ *           type: object
+ *           properties:
+ *             jobDescriptionGenerated:
+ *               type: boolean
+ *               example: true
+ *             requirementsGenerated:
+ *               type: boolean
+ *               example: true
+ *             summaryGenerated:
+ *               type: boolean
+ *               example: false
  *         companyId:
  *           type: string
  *           example: "507f1f77bcf86cd799439011"
@@ -358,6 +396,317 @@
  *         updatedAt:
  *           type: string
  *           format: date-time
+ *
+ *     CreateJobRequest:
+ *       type: object
+ *       required:
+ *         - title
+ *         - department
+ *         - location
+ *         - country
+ *         - state
+ *         - city
+ *         - salary
+ *         - type
+ *         - hiringManager
+ *         - workMode
+ *         - workExperience
+ *         - skillsRequired
+ *         - workflowId
+ *       properties:
+ *         title:
+ *           type: string
+ *           example: "Senior Software Engineer"
+ *           minLength: 1
+ *           maxLength: 100
+ *         department:
+ *           type: string
+ *           example: "Engineering"
+ *           maxLength: 50
+ *         location:
+ *           type: string
+ *           example: "San Francisco, CA, USA"
+ *         country:
+ *           type: string
+ *           example: "USA"
+ *         state:
+ *           type: string
+ *           example: "CA"
+ *         city:
+ *           type: string
+ *           example: "San Francisco"
+ *         salary:
+ *           type: object
+ *           required:
+ *             - min
+ *             - max
+ *             - currency
+ *             - payRate
+ *           properties:
+ *             min:
+ *               type: number
+ *               example: 100000
+ *             max:
+ *               type: number
+ *               example: 150000
+ *             currency:
+ *               type: string
+ *               example: "USD"
+ *             payRate:
+ *               type: string
+ *               enum: [hourly, daily, annual]
+ *               example: "annual"
+ *         type:
+ *           type: string
+ *           enum: [fulltime, parttime, contract, internship]
+ *           example: "fulltime"
+ *         hiringManager:
+ *           type: string
+ *           example: "507f1f77bcf86cd799439011"
+ *           description: "User ID of the hiring manager"
+ *         targetClosingDate:
+ *           type: string
+ *           format: date-time
+ *           example: "2024-03-01T23:59:59Z"
+ *         clientName:
+ *           type: string
+ *           example: "TechCorp Inc."
+ *         accountManager:
+ *           type: string
+ *           example: "507f1f77bcf86cd799439011"
+ *         contactPerson:
+ *           type: string
+ *           example: "Jane Smith"
+ *         workMode:
+ *           type: string
+ *           enum: [remote, hybrid, onsite]
+ *           example: "hybrid"
+ *         workExperience:
+ *           type: string
+ *           example: "5+ years"
+ *         educationRequirement:
+ *           type: string
+ *           example: "Bachelor's degree in Computer Science or related field"
+ *         skillsRequired:
+ *           type: array
+ *           items:
+ *             type: string
+ *           example: ["JavaScript", "Node.js", "React", "MongoDB"]
+ *         preferredSkills:
+ *           type: array
+ *           items:
+ *             type: string
+ *           example: ["TypeScript", "AWS", "Docker"]
+ *         benefits:
+ *           type: string
+ *           example: "Health insurance, 401k, flexible PTO, remote work"
+ *         employmentType:
+ *           type: string
+ *           example: "Full-time"
+ *         workflowId:
+ *           type: string
+ *           example: "507f1f77bcf86cd799439011"
+ *           description: "Associated workflow ID"
+ *         jobSummary:
+ *           type: string
+ *           example: "We are seeking a Senior Software Engineer to join our team"
+ *           maxLength: 1000
+ *         jobDescription:
+ *           type: string
+ *           example: "Join our engineering team to build next-generation AI products"
+ *           maxLength: 5000
+ *         requirements:
+ *           type: string
+ *           example: "5+ years of software development experience. Proficiency in JavaScript, Node.js, React"
+ *           maxLength: 3000
+ *         expectedRevenue:
+ *           type: number
+ *           example: 25000
+ *         probabilityOfClosure:
+ *           type: string
+ *           example: "high"
+ *         numberOfOpenings:
+ *           type: number
+ *           example: 2
+ *           minimum: 1
+ *         notes:
+ *           type: string
+ *           example: "Urgent requirement for Q1 project"
+ *         tags:
+ *           type: string
+ *           example: "urgent,remote,senior"
+ *         customFields:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               fieldName:
+ *                 type: string
+ *                 example: "Project Code"
+ *               fieldType:
+ *                 type: string
+ *                 enum: [text, number, date, select, multiselect]
+ *                 example: "text"
+ *               fieldValue:
+ *                 type: string
+ *                 example: "PROJ-2024-001"
+ *               isRequired:
+ *                 type: boolean
+ *                 example: false
+ *         templateUsed:
+ *           type: string
+ *           example: "software-engineer-template"
+ *         generateWithAI:
+ *           type: boolean
+ *           example: true
+ *
+ *     UpdateJobRequest:
+ *       type: object
+ *       properties:
+ *         title:
+ *           type: string
+ *           example: "Senior Software Engineer"
+ *           minLength: 1
+ *           maxLength: 100
+ *         department:
+ *           type: string
+ *           example: "Engineering"
+ *           maxLength: 50
+ *         location:
+ *           type: string
+ *           example: "San Francisco, CA, USA"
+ *         country:
+ *           type: string
+ *           example: "USA"
+ *         state:
+ *           type: string
+ *           example: "CA"
+ *         city:
+ *           type: string
+ *           example: "San Francisco"
+ *         salary:
+ *           type: object
+ *           properties:
+ *             min:
+ *               type: number
+ *               example: 100000
+ *             max:
+ *               type: number
+ *               example: 150000
+ *             currency:
+ *               type: string
+ *               example: "USD"
+ *             payRate:
+ *               type: string
+ *               enum: [hourly, daily, annual]
+ *               example: "annual"
+ *         type:
+ *           type: string
+ *           enum: [fulltime, parttime, contract, internship]
+ *           example: "fulltime"
+ *         hiringManager:
+ *           type: string
+ *           example: "507f1f77bcf86cd799439011"
+ *           description: "User ID of the hiring manager"
+ *         targetClosingDate:
+ *           type: string
+ *           format: date-time
+ *           example: "2024-03-01T23:59:59Z"
+ *         clientName:
+ *           type: string
+ *           example: "TechCorp Inc."
+ *         accountManager:
+ *           type: string
+ *           example: "507f1f77bcf86cd799439011"
+ *         contactPerson:
+ *           type: string
+ *           example: "Jane Smith"
+ *         workMode:
+ *           type: string
+ *           enum: [remote, hybrid, onsite]
+ *           example: "hybrid"
+ *         workExperience:
+ *           type: string
+ *           example: "5+ years"
+ *         educationRequirement:
+ *           type: string
+ *           example: "Bachelor's degree in Computer Science or related field"
+ *         skillsRequired:
+ *           type: array
+ *           items:
+ *             type: string
+ *           example: ["JavaScript", "Node.js", "React", "MongoDB"]
+ *         preferredSkills:
+ *           type: array
+ *           items:
+ *             type: string
+ *           example: ["TypeScript", "AWS", "Docker"]
+ *         benefits:
+ *           type: string
+ *           example: "Health insurance, 401k, flexible PTO, remote work"
+ *         employmentType:
+ *           type: string
+ *           example: "Full-time"
+ *         workflowId:
+ *           type: string
+ *           example: "507f1f77bcf86cd799439011"
+ *           description: "Associated workflow ID"
+ *         jobSummary:
+ *           type: string
+ *           example: "We are seeking a Senior Software Engineer to join our team"
+ *           maxLength: 1000
+ *         jobDescription:
+ *           type: string
+ *           example: "Join our engineering team to build next-generation AI products"
+ *           maxLength: 5000
+ *         requirements:
+ *           type: string
+ *           example: "5+ years of software development experience. Proficiency in JavaScript, Node.js, React"
+ *           maxLength: 3000
+ *         expectedRevenue:
+ *           type: number
+ *           example: 25000
+ *         probabilityOfClosure:
+ *           type: string
+ *           example: "high"
+ *         numberOfOpenings:
+ *           type: number
+ *           example: 2
+ *           minimum: 1
+ *         notes:
+ *           type: string
+ *           example: "Urgent requirement for Q1 project"
+ *         tags:
+ *           type: string
+ *           example: "urgent,remote,senior"
+ *         customFields:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               fieldName:
+ *                 type: string
+ *                 example: "Project Code"
+ *               fieldType:
+ *                 type: string
+ *                 enum: [text, number, date, select, multiselect]
+ *                 example: "text"
+ *               fieldValue:
+ *                 type: string
+ *                 example: "PROJ-2024-001"
+ *               isRequired:
+ *                 type: boolean
+ *                 example: false
+ *         templateUsed:
+ *           type: string
+ *           example: "software-engineer-template"
+ *         generateWithAI:
+ *           type: boolean
+ *           example: true
+ *         status:
+ *           type: string
+ *           enum: [active, draft, closed, onhold]
+ *           example: "active"
  *
  *     Candidate:
  *       type: object

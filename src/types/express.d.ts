@@ -39,6 +39,12 @@ declare global {
             update: boolean;
             delete: boolean;
           };
+          workflows: {
+            create: boolean;
+            read: boolean;
+            update: boolean;
+            delete: boolean;
+          };
           settings: {
             read: boolean;
             update: boolean;
