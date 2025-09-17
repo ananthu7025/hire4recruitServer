@@ -7,7 +7,7 @@ export interface JwtPayload {
   userId: string;
   companyId: string;
   email: string;
-  role: string;
+  roleId: string;
   iat?: number;
   exp?: number;
 }
@@ -56,7 +56,7 @@ export class AuthUtils {
       userId: user._id.toString(),
       companyId: user.companyId.toString(),
       email: user.email,
-      role: user.role
+      roleId: user.roleId.toString()
     };
 
     return this.generateToken(payload);
@@ -150,8 +150,8 @@ export class AuthUtils {
     return authHeader.substring(7);
   }
 
-  // Generate user permissions based on role
-  static generatePermissionsByRole(role: IEmployee['role']) {
+  // Generate user permissions based on role (deprecated - use RoleService instead)
+  static generatePermissionsByRole(role: string) {
     const permissions = {
       jobs: { create: false, read: false, update: false, delete: false },
       candidates: { create: false, read: false, update: false, delete: false },

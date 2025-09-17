@@ -49,6 +49,8 @@ tags:
     description: User management
   - name: Employees
     description: Employee management and team administration
+  - name: Roles
+    description: Role management and permissions
   - name: Jobs
     description: Job posting and management
   - name: Candidates
@@ -124,7 +126,7 @@ paths:
     $ref: './paths/employees.yaml#/employees'
   /employees/search:
     $ref: './paths/employees.yaml#/employee-search'
-  /employees/role/{role}:
+  /employees/role/{roleId}:
     $ref: './paths/employees.yaml#/employees-by-role'
   /employees/{employeeId}:
     $ref: './paths/employees.yaml#/employee-by-id'
@@ -138,6 +140,12 @@ paths:
     $ref: './paths/employees.yaml#/employee-activity'
   /employees/{employeeId}/permissions:
     $ref: './paths/employees.yaml#/employee-permissions'
+
+  # Role endpoints
+  /roles:
+    $ref: './paths/roles.yaml#/roles'
+  /roles/{roleId}:
+    $ref: './paths/roles.yaml#/role-by-id'
 
   # Job endpoints
   /jobs:

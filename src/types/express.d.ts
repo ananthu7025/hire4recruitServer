@@ -7,7 +7,7 @@ declare global {
         userId: string;
         companyId: string;
         email: string;
-        role: string;
+        roleId: string;
         permissions?: {
           jobs: {
             create: boolean;

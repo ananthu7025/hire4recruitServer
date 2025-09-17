@@ -221,9 +221,10 @@ schemas:
         maxLength: 50
       phone:
         type: string
-      role:
+      roleId:
         type: string
-        enum: [company_admin, hr_manager, recruiter, interviewer, hiring_manager]
+        format: objectId
+        description: Reference to Role document
       department:
         type: string
       jobTitle:
@@ -300,10 +301,11 @@ schemas:
       avatar:
         type: string
         description: Profile avatar URL
-      role:
+      roleId:
         type: string
-        enum: [company_admin, hr_manager, recruiter, interviewer, hiring_manager]
-        description: Employee role
+        format: objectId
+        description: Reference to Role document
+        example: "507f1f77bcf86cd799439011"
       permissions:
         $ref: '#/schemas/EmployeePermissions'
       department:
@@ -480,15 +482,160 @@ schemas:
   UpdateEmployeeRoleRequest:
     type: object
     properties:
-      role:
+      roleId:
         type: string
-        enum: [company_admin, hr_manager, recruiter, interviewer, hiring_manager]
+        format: objectId
+        description: Reference to Role document
       department:
         type: string
       jobTitle:
         type: string
     required:
-      - role
+      - roleId
+
+  # Role schemas
+  Role:
+    type: object
+    properties:
+      _id:
+        type: string
+        format: objectId
+        description: Role ID
+      companyId:
+        type: string
+        format: objectId
+        description: Company ID
+      name:
+        type: string
+        description: Role name (system-friendly)
+        example: "senior_developer"
+      displayName:
+        type: string
+        description: Human-readable role name
+        example: "Senior Developer"
+      description:
+        type: string
+        description: Role description
+        example: "Lead development projects and mentor junior developers"
+      color:
+        type: string
+        pattern: "^#[0-9A-F]{6}$"
+        description: Hex color for UI display
+        example: "#2563eb"
+      permissions:
+        $ref: '#/schemas/RolePermissions'
+      isSystem:
+        type: boolean
+        description: Whether this is a system role (cannot be deleted)
+        example: false
+      isActive:
+        type: boolean
+        description: Whether the role is active
+        example: true
+      isDeleted:
+        type: boolean
+        description: Whether the role is deleted
+        example: false
+      createdBy:
+        type: string
+        format: objectId
+        description: ID of user who created this role
+      updatedBy:
+        type: string
+        format: objectId
+        description: ID of user who last updated this role
+      createdAt:
+        type: string
+        format: date-time
+      updatedAt:
+        type: string
+        format: date-time
+    required:
+      - companyId
+      - name
+      - displayName
+      - permissions
+
+  RolePermissions:
+    type: object
+    properties:
+      jobs:
+        $ref: '#/schemas/ResourcePermissions'
+      candidates:
+        $ref: '#/schemas/ResourcePermissions'
+      interviews:
+        $ref: '#/schemas/ResourcePermissions'
+      assessments:
+        $ref: '#/schemas/ResourcePermissions'
+      employees:
+        $ref: '#/schemas/ResourcePermissions'
+      reports:
+        type: object
+        properties:
+          read:
+            type: boolean
+      settings:
+        type: object
+        properties:
+          read:
+            type: boolean
+          update:
+            type: boolean
+
+  CreateRoleRequest:
+    type: object
+    properties:
+      name:
+        type: string
+        minLength: 2
+        maxLength: 50
+        pattern: "^[a-zA-Z0-9_\\s-]+$"
+        description: Role name (will be converted to snake_case)
+        example: "Senior Developer"
+      displayName:
+        type: string
+        minLength: 2
+        maxLength: 100
+        description: Human-readable role name
+        example: "Senior Developer"
+      description:
+        type: string
+        maxLength: 500
+        description: Role description
+        example: "Lead development projects and mentor junior developers"
+      color:
+        type: string
+        pattern: "^#[0-9A-F]{6}$"
+        description: Hex color for UI display
+        example: "#2563eb"
+      permissions:
+        $ref: '#/schemas/RolePermissions'
+    required:
+      - name
+      - displayName
+      - permissions
+
+  UpdateRoleRequest:
+    type: object
+    properties:
+      displayName:
+        type: string
+        minLength: 2
+        maxLength: 100
+        description: Human-readable role name
+      description:
+        type: string
+        maxLength: 500
+        description: Role description
+      color:
+        type: string
+        pattern: "^#[0-9A-F]{6}$"
+        description: Hex color for UI display
+      permissions:
+        $ref: '#/schemas/RolePermissions'
+      isActive:
+        type: boolean
+        description: Whether the role is active
 
   ResourcePermissions:
     type: object

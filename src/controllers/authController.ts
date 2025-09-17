@@ -8,11 +8,18 @@ import Company from '../models/Company';
 interface AuthRequest extends Request {
   user?: {
     userId: string;
-    email: string;
-    role: string;
     companyId: string;
+    email: string;
+    roleId: string;
+    permissions?: {
+      jobs: { create: boolean; read: boolean; update: boolean; delete: boolean; };
+      candidates: { create: boolean; read: boolean; update: boolean; delete: boolean; };
+      interviews: { create: boolean; read: boolean; update: boolean; delete: boolean; };
+      assessments: { create: boolean; read: boolean; update: boolean; delete: boolean; };
+      employees: { create: boolean; read: boolean; update: boolean; delete: boolean; };
+      settings: { read: boolean; update: boolean; };
+    };
     userData?: any;
-    permissions?: any;
   };
 }
 
@@ -142,7 +149,7 @@ export class AuthController {
             email: result.user.email,
             firstName: result.user.firstName,
             lastName: result.user.lastName,
-            role: result.user.role,
+            roleId: result.user.roleId,
             employeeId: result.user.employeeId
           },
           payment: {
@@ -222,7 +229,7 @@ export class AuthController {
             email: req.user.email,
             firstName: req.user.userData?.firstName,
             lastName: req.user.userData?.lastName,
-            role: req.user.role,
+            roleId: req.user.roleId,
             department: req.user.userData?.department,
             jobTitle: req.user.userData?.jobTitle,
             phone: req.user.userData?.phone,
@@ -245,7 +252,7 @@ export class AuthController {
   // Invite employee to company
   static async inviteEmployee(req: AuthRequest, res: Response): Promise<void> {
     try {
-      const { email, firstName, lastName, role, department, jobTitle, phone } = req.body;
+      const { email, firstName, lastName, roleId, department, jobTitle, phone } = req.body;
 
       if (!req.user) {
         res.status(401).json({
@@ -259,7 +266,7 @@ export class AuthController {
         email,
         firstName,
         lastName,
-        role,
+        roleId,
         department,
         jobTitle,
         phone,
@@ -276,7 +283,7 @@ export class AuthController {
             email: invitedEmployee.email,
             firstName: invitedEmployee.firstName,
             lastName: invitedEmployee.lastName,
-            role: invitedEmployee.role,
+            roleId: invitedEmployee.roleId,
             department: invitedEmployee.department,
             jobTitle: invitedEmployee.jobTitle,
             employeeId: invitedEmployee.employeeId, // This is now auto-generated

@@ -103,9 +103,10 @@ export const inviteEmployeeSchema = z.object({
     email: emailSchema,
     firstName: nameSchema('First name'),
     lastName: nameSchema('Last name'),
-    role: z.enum(['company_admin', 'hr_manager', 'recruiter', 'interviewer', 'hiring_manager'], {
-      message: 'Please select a valid role: Company Admin, HR Manager, Recruiter, Interviewer, or Hiring Manager'
-    }),
+    roleId: z.string()
+      .min(24, 'Invalid role ID')
+      .max(24, 'Invalid role ID')
+      .regex(/^[0-9a-fA-F]{24}$/, 'Invalid role ID format'),
     department: z.string().max(100, 'Department name is too long').optional(),
     jobTitle: z.string().max(100, 'Job title is too long').optional(),
     phone: phoneSchema,

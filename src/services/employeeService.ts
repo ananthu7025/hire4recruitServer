@@ -21,7 +21,7 @@ export interface UpdateEmployeeData {
 }
 
 export interface UpdateEmployeeRoleData {
-  role: IEmployee['role'];
+  roleId: string;
   department?: string;
   jobTitle?: string;
 }
@@ -52,7 +52,7 @@ export class EmployeeService {
     options: {
       page?: number;
       limit?: number;
-      role?: IEmployee['role'];
+      roleId?: string;
       isActive?: boolean;
       department?: string;
       search?: string;
@@ -64,7 +64,7 @@ export class EmployeeService {
       const {
         page = 1,
         limit = 10,
-        role,
+        roleId,
         isActive,
         department,
         search,
@@ -80,8 +80,8 @@ export class EmployeeService {
         isDeleted: false
       };
 
-      if (role) {
-        filter.role = role;
+      if (roleId) {
+        filter.roleId = new mongoose.Types.ObjectId(roleId);
       }
 
       if (typeof isActive === 'boolean') {
@@ -194,8 +194,14 @@ export class EmployeeService {
     updatedBy: string
   ): Promise<IEmployee> {
     try {
-      // Generate new permissions based on role
-      const permissions = AuthUtils.generatePermissionsByRole(roleData.role);
+      // Get role and use its permissions
+      const { RoleService } = await import('./roleService');
+      const role = await RoleService.getRoleById(roleData.roleId, companyId);
+      if (!role) {
+        throw new Error('Invalid role specified');
+      }
+
+      const permissions = role.permissions;
 
       const employee = await Employee.findOneAndUpdate(
         {
@@ -204,7 +210,7 @@ export class EmployeeService {
           isDeleted: false
         },
         {
-          role: roleData.role,
+          roleId: new mongoose.Types.ObjectId(roleData.roleId),
           permissions,
           department: roleData.department,
           jobTitle: roleData.jobTitle,
@@ -224,7 +230,7 @@ export class EmployeeService {
       logger.info('User role updated successfully', {
         employeeId,
         companyId,
-        newRole: roleData.role,
+        newRoleId: roleData.roleId,
         updatedBy
       });
 
@@ -411,12 +417,12 @@ export class EmployeeService {
   // Get employees by role
   static async getEmployeesByRole(
     companyId: string,
-    role: IEmployee['role']
+    roleId: string
   ): Promise<IEmployee[]> {
     try {
       const employees = await Employee.find({
         companyId,
-        role,
+        roleId,
         isDeleted: false,
         isActive: true
       })
@@ -427,7 +433,7 @@ export class EmployeeService {
       return employees as IEmployee[];
 
     } catch (error) {
-      logger.error('Get employees by role failed:', { companyId, role, error });
+      logger.error('Get employees by role failed:', { companyId, roleId, error });
       throw error;
     }
   }
@@ -438,12 +444,12 @@ export class EmployeeService {
     searchTerm: string,
     options: {
       limit?: number;
-      excludeRoles?: IEmployee['role'][];
+      excludeRoleIds?: string[];
       includeInactive?: boolean;
     } = {}
   ): Promise<IEmployee[]> {
     try {
-      const { limit = 20, excludeRoles = [], includeInactive = false } = options;
+      const { limit = 20, excludeRoleIds = [], includeInactive = false } = options;
 
       const filter: any = {
         companyId: new mongoose.Types.ObjectId(companyId),
@@ -463,12 +469,12 @@ export class EmployeeService {
         filter.isActive = true;
       }
 
-      if (excludeRoles.length > 0) {
-        filter.role = { $nin: excludeRoles };
+      if (excludeRoleIds.length > 0) {
+        filter.roleId = { $nin: excludeRoleIds.map(id => new mongoose.Types.ObjectId(id)) };
       }
 
       const employees = await Employee.find(filter)
-        .select('firstName lastName email role department jobTitle isActive')
+        .select('firstName lastName email roleId department jobTitle isActive')
         .sort({ firstName: 1, lastName: 1 })
         .limit(limit)
         .lean();

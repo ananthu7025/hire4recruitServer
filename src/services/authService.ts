@@ -1,6 +1,7 @@
 import { AuthUtils } from '../utils/auth';
 import Employee, { IEmployee } from '../models/Employee';
 import Company, { ICompany } from '../models/Company';
+import { RoleService } from './roleService';
 import { logger } from '../config/logger';
 import mongoose from 'mongoose';
 import nodemailer from 'nodemailer';
@@ -47,7 +48,7 @@ export interface LoginResult {
     email: string;
     firstName: string;
     lastName: string;
-    role: string;
+    roleId: string;
     companyId: string;
     isEmailVerified: boolean;
     permissions: IEmployee['permissions'];
@@ -65,7 +66,7 @@ export interface InviteUserData {
   email: string;
   firstName: string;
   lastName: string;
-  role: 'company_admin' | 'hr_manager' | 'recruiter' | 'interviewer' | 'hiring_manager';
+  roleId: string;
   department?: string;
   jobTitle?: string;
   phone?: string;
@@ -198,11 +199,20 @@ export class AuthService {
 
       const company = await Company.create(companyData);
 
+      // Create default roles for the company
+      const roles = await RoleService.createDefaultRoles(company._id.toString(), company._id.toString());
+
+      // Get the company_admin role
+      const adminRole = roles.find(role => role.name === 'company_admin');
+      if (!adminRole) {
+        throw new Error('Failed to create admin role');
+      }
+
       // Hash admin password
       const hashedPassword = await AuthUtils.hashPassword(data.adminPassword);
 
-      // Generate admin permissions
-      const adminPermissions = AuthUtils.generatePermissionsByRole('company_admin');
+      // Use admin role permissions
+      const adminPermissions = adminRole.permissions;
 
       // Generate admin employee ID
       const adminEmployeeId = await this.generateEmployeeId(company._id.toString());
@@ -215,7 +225,7 @@ export class AuthService {
         firstName: data.adminFirstName,
         lastName: data.adminLastName,
         phone: data.adminPhone,
-        role: 'company_admin' as const,
+        roleId: adminRole._id,
         permissions: adminPermissions,
         employeeId: adminEmployeeId,
         isActive: true,
@@ -309,7 +319,7 @@ export class AuthService {
           email: user.email,
           firstName: user.firstName,
           lastName: user.lastName,
-          role: user.role,
+          roleId: user.roleId.toString(),
           companyId: user.companyId.toString(),
           isEmailVerified: user.isEmailVerified,
           permissions: user.permissions
@@ -352,8 +362,14 @@ export class AuthService {
         throw new Error('A user with this email already exists in your company');
       }
 
-      // Generate permissions based on role
-      const permissions = AuthUtils.generatePermissionsByRole(data.role);
+      // Get role by ID and validate it exists
+      const role = await RoleService.getRoleById(data.roleId, data.companyId);
+      if (!role) {
+        throw new Error('Invalid role specified');
+      }
+
+      // Use role permissions
+      const permissions = role.permissions;
 
       // Generate invite token
       const inviteToken = AuthUtils.generateInviteToken();
@@ -369,7 +385,7 @@ export class AuthService {
         firstName: data.firstName,
         lastName: data.lastName,
         phone: data.phone,
-        role: data.role,
+        roleId: new mongoose.Types.ObjectId(data.roleId),
         permissions,
         department: data.department,
         jobTitle: data.jobTitle,
@@ -394,7 +410,7 @@ export class AuthService {
         invitedUserId: invitedUser._id.toString(),
         invitedByUserId: data.invitedBy,
         email: data.email,
-        role: data.role,
+        roleId: data.roleId,
         companyId: data.companyId
       });
 
@@ -464,7 +480,7 @@ export class AuthService {
           email: user.email,
           firstName: user.firstName,
           lastName: user.lastName,
-          role: user.role,
+          roleId: user.roleId.toString(),
           companyId: user.companyId.toString(),
           isEmailVerified: user.isEmailVerified,
           permissions: user.permissions
@@ -542,8 +558,8 @@ export class AuthService {
         email
       });
 
-      // TODO: Send password reset email
-      // await this.sendPasswordResetEmail(user, token);
+      // Send password reset email (don't fail if email fails)
+      this.sendPasswordResetEmailAsync(user, token);
 
     } catch (error) {
       logger.error('Password reset token generation failed:', { email, error });
@@ -606,10 +622,15 @@ export class AuthService {
     this.updateCompanySubscription(company, paymentData);
     await company.save();
 
-    // Generate token for admin user
+    // Find admin role and then admin user
+    const adminRole = await RoleService.getRoleByName('company_admin', company._id.toString());
+    if (!adminRole) {
+      throw new Error('Admin role not found');
+    }
+
     const adminUser = await Employee.findOne({
       companyId: company._id,
-      role: 'company_admin'
+      roleId: adminRole._id
     });
 
     if (!adminUser) {
@@ -635,6 +656,88 @@ export class AuthService {
   }
 }
 
+
+  static async sendPasswordResetEmail(user: IEmployee, token: string): Promise<void> {
+    try {
+      // Get company details
+      const company = await Company.findById(user.companyId).select('name');
+      if (!company) {
+        throw new Error('Company not found');
+      }
+
+      const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password/${token}`;
+
+      const transporter = this.getEmailTransporter();
+
+      const templatePath = path.join(__dirname, '../templates/password-reset.html');
+      const htmlTemplate = fs.readFileSync(templatePath, 'utf8');
+
+      const html = htmlTemplate
+        .replace(/{{firstName}}/g, user.firstName)
+        .replace(/{{lastName}}/g, user.lastName)
+        .replace(/{{companyName}}/g, company.name)
+        .replace(/{{resetLink}}/g, resetLink);
+
+      const mailOptions = {
+        from: process.env.EMAIL_FROM || 'noreply@hire4recruit.com',
+        to: user.email,
+        subject: `Password Reset Request - ${company.name}`,
+        html: html,
+        text: `
+          Password Reset Request
+
+          Hello ${user.firstName} ${user.lastName},
+
+          We received a request to reset your password for your hire4recruit account at ${company.name}.
+
+          If you made this request, visit the following link to reset your password:
+          ${resetLink}
+
+          This link will expire in 1 hour for security reasons.
+
+          If you did not request a password reset, please ignore this email and your password will remain unchanged.
+
+          For security reasons, we recommend that you:
+          • Choose a strong password that is unique to your hire4recruit account
+          • Use a combination of uppercase and lowercase letters, numbers, and special characters
+          • Avoid using personal information that could be easily guessed
+
+          If you continue to have trouble accessing your account, please contact your system administrator.
+        `
+      };
+
+      await transporter.sendMail(mailOptions);
+      logger.info('Password reset email sent successfully', {
+        userId: user._id.toString(),
+        email: user.email,
+        companyId: company._id.toString()
+      });
+
+    } catch (error) {
+      logger.error('Failed to send password reset email:', {
+        userId: user._id.toString(),
+        email: user.email,
+        error
+      });
+      throw new Error('Failed to send password reset email');
+    }
+  }
+
+  private static async sendPasswordResetEmailAsync(user: IEmployee, token: string): Promise<void> {
+    try {
+      await this.sendPasswordResetEmail(user, token);
+      logger.info('Password reset email sent', {
+        userId: user._id.toString(),
+        email: user.email
+      });
+    } catch (emailError) {
+      logger.warn('Failed to send password reset email, but token generated', {
+        userId: user._id.toString(),
+        email: user.email,
+        error: emailError
+      });
+    }
+  }
 
   static async sendVerificationEmail(userId: string, email: string, companyName: string): Promise<void> {
     try {
@@ -748,7 +851,7 @@ export class AuthService {
         .replace(/{{firstName}}/g, invitedUser.firstName)
         .replace(/{{lastName}}/g, invitedUser.lastName)
         .replace(/{{companyName}}/g, company.name)
-        .replace(/{{role}}/g, invitedUser.role)
+        .replace(/{{role}}/g, 'Employee')
         .replace(/{{department}}/g, invitedUser.department || 'Not specified')
         .replace(/{{jobTitle}}/g, invitedUser.jobTitle || 'Not specified')
         .replace(/{{employeeId}}/g, invitedUser.employeeId || 'Not assigned')
@@ -765,10 +868,10 @@ export class AuthService {
 
           Hello ${invitedUser.firstName} ${invitedUser.lastName},
 
-          You have been invited to join ${company.name} as a ${invitedUser.role}.
+          You have been invited to join ${company.name} as an employee.
 
           Invitation Details:
-          - Role: ${invitedUser.role}
+          - Role: Employee
           - Department: ${invitedUser.department || 'Not specified'}
           - Job Title: ${invitedUser.jobTitle || 'Not specified'}
           - Employee ID: ${invitedUser.employeeId || 'Not assigned'}

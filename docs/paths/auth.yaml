@@ -304,11 +304,11 @@ invite-employee:
                 minLength: 2
                 maxLength: 50
                 example: "Smith"
-              role:
+              roleId:
                 type: string
-                enum: [company_admin, hr_manager, recruiter, interviewer, hiring_manager]
-                example: "recruiter"
-                description: Employee role - can be any valid role including company_admin
+                format: objectId
+                example: "507f1f77bcf86cd799439011"
+                description: Reference to Role document ID
               department:
                 type: string
                 example: "HR"
@@ -338,7 +338,7 @@ invite-employee:
               - email
               - firstName
               - lastName
-              - role
+              - roleId
     responses:
       '201':
         description: Employee invitation sent successfully

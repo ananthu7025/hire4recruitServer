@@ -144,12 +144,12 @@ export class EmployeeController {
       }
 
       const { employeeId } = req.params;
-      const { role, department, jobTitle } = req.body;
+      const { roleId, department, jobTitle } = req.body;
 
       const updatedUser = await EmployeeService.updateEmployeeRole(
         employeeId,
         req.user.companyId,
-        { role, department, jobTitle },
+        { roleId, department, jobTitle },
         req.user.userId
       );
 

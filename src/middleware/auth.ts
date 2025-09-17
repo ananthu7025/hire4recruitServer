@@ -66,7 +66,7 @@ export class AuthMiddleware {
         userId: user._id.toString(),
         companyId: typeof user.companyId === 'object' ? (user.companyId as any)._id.toString() : (user.companyId as any).toString(),
         email: user.email,
-        role: user.role,
+        roleId: user.roleId.toString(),
         permissions: user.permissions,
         userData: user as IEmployee
       };
@@ -109,8 +109,8 @@ export class AuthMiddleware {
   }
 
   // Role-based authorization
-  static requireRole(...roles: IEmployee['role'][]) {
-    return (req: Request, res: Response, next: NextFunction) => {
+  static requireRole(...roleNames: string[]) {
+    return async (req: Request, res: Response, next: NextFunction) => {
       if (!req.user) {
         res.status(401).json({
           error: 'Access denied',
@@ -119,15 +119,26 @@ export class AuthMiddleware {
         return;
       }
 
-      if (!roles.includes(req.user.role as IEmployee['role'])) {
-        res.status(403).json({
-          error: 'Forbidden',
-          message: 'Insufficient permissions'
-        });
-        return;
-      }
+      try {
+        // Get user's role name from Role table
+        const { RoleService } = await import('../services/roleService');
+        const userRole = await RoleService.getRoleById(req.user.roleId, req.user.companyId);
 
-      next();
+        if (!userRole || !roleNames.includes(userRole.name)) {
+          res.status(403).json({
+            error: 'Forbidden',
+            message: 'Insufficient permissions'
+          });
+          return;
+        }
+
+        next();
+      } catch (error) {
+        res.status(500).json({
+          error: 'Internal server error',
+          message: 'Failed to verify role'
+        });
+      }
     };
   }
 
@@ -201,7 +212,7 @@ export class AuthMiddleware {
   }
 
   // Admin only endpoints
-  static requireAdmin(req: Request, res: Response, next: NextFunction): void {
+  static async requireAdmin(req: Request, res: Response, next: NextFunction): Promise<void> {
     if (!req.user) {
       res.status(401).json({
         error: 'Access denied',
@@ -210,10 +221,22 @@ export class AuthMiddleware {
       return;
     }
 
-    if (req.user.role !== 'company_admin') {
-      res.status(403).json({
-        error: 'Forbidden',
-        message: 'Admin access required'
+    try {
+      // Check if user has admin role
+      const { RoleService } = await import('../services/roleService');
+      const userRole = await RoleService.getRoleById(req.user.roleId, req.user.companyId);
+
+      if (!userRole || userRole.name !== 'company_admin') {
+        res.status(403).json({
+          error: 'Forbidden',
+          message: 'Admin access required'
+        });
+        return;
+      }
+    } catch (error) {
+      res.status(500).json({
+        error: 'Internal server error',
+        message: 'Failed to verify admin role'
       });
       return;
     }

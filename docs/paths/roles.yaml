@@ -1,0 +1,299 @@
+roles:
+  get:
+    tags:
+      - Roles
+    summary: Get all company roles
+    description: Retrieve all roles for the authenticated user's company, including both system and custom roles
+    security:
+      - BearerAuth: []
+    responses:
+      '200':
+        description: Roles retrieved successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '../components/index.yaml#/schemas/Role'
+            example:
+              success: true
+              message: "Roles retrieved successfully"
+              data:
+                - _id: "507f1f77bcf86cd799439011"
+                  name: "company_admin"
+                  displayName: "Company Admin"
+                  description: "Full access to all company features"
+                  color: "#dc3545"
+                  isSystem: true
+                  isActive: true
+                - _id: "507f1f77bcf86cd799439012"
+                  name: "senior_developer"
+                  displayName: "Senior Developer"
+                  description: "Lead development projects"
+                  color: "#2563eb"
+                  isSystem: false
+                  isActive: true
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+  post:
+    tags:
+      - Roles
+    summary: Create custom role
+    description: Create a new custom role for the company with specified permissions
+    security:
+      - BearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/index.yaml#/schemas/CreateRoleRequest'
+          example:
+            name: "Senior Developer"
+            displayName: "Senior Developer"
+            description: "Lead development projects and mentor junior developers"
+            color: "#2563eb"
+            permissions:
+              jobs:
+                create: true
+                read: true
+                update: true
+                delete: false
+              candidates:
+                create: true
+                read: true
+                update: true
+                delete: false
+              interviews:
+                create: true
+                read: true
+                update: true
+                delete: false
+              assessments:
+                create: false
+                read: true
+                update: false
+                delete: false
+              employees:
+                create: false
+                read: true
+                update: false
+                delete: false
+              reports:
+                read: true
+              settings:
+                read: false
+                update: false
+    responses:
+      '201':
+        description: Role created successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/index.yaml#/schemas/Role'
+            example:
+              success: true
+              message: "Role created successfully"
+              data:
+                _id: "507f1f77bcf86cd799439013"
+                name: "senior_developer"
+                displayName: "Senior Developer"
+                description: "Lead development projects and mentor junior developers"
+                color: "#2563eb"
+                isSystem: false
+                isActive: true
+      '400':
+        $ref: '../components/index.yaml#/responses/ValidationError'
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '409':
+        description: Role name already exists
+        content:
+          application/json:
+            schema:
+              $ref: '../components/index.yaml#/schemas/Error'
+            example:
+              error: "Role creation failed"
+              message: "A role with this name already exists"
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+role-by-id:
+  get:
+    tags:
+      - Roles
+    summary: Get role by ID
+    description: Retrieve a specific role by its ID
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: roleId
+        in: path
+        required: true
+        description: Role ID
+        schema:
+          type: string
+          format: objectId
+          example: "507f1f77bcf86cd799439011"
+    responses:
+      '200':
+        description: Role retrieved successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/index.yaml#/schemas/Role'
+            example:
+              success: true
+              message: "Role retrieved successfully"
+              data:
+                _id: "507f1f77bcf86cd799439011"
+                name: "senior_developer"
+                displayName: "Senior Developer"
+                description: "Lead development projects and mentor junior developers"
+                color: "#2563eb"
+                isSystem: false
+                isActive: true
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '404':
+        $ref: '../components/index.yaml#/responses/NotFoundError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+  put:
+    tags:
+      - Roles
+    summary: Update role
+    description: Update a custom role (system roles cannot be updated)
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: roleId
+        in: path
+        required: true
+        description: Role ID
+        schema:
+          type: string
+          format: objectId
+          example: "507f1f77bcf86cd799439011"
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/index.yaml#/schemas/UpdateRoleRequest'
+          example:
+            displayName: "Lead Developer"
+            description: "Lead development projects, mentor developers, and make architectural decisions"
+            color: "#1d4ed8"
+            permissions:
+              jobs:
+                create: true
+                read: true
+                update: true
+                delete: true
+              candidates:
+                create: true
+                read: true
+                update: true
+                delete: false
+    responses:
+      '200':
+        description: Role updated successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '../components/index.yaml#/schemas/SuccessResponse'
+                - type: object
+                  properties:
+                    data:
+                      $ref: '../components/index.yaml#/schemas/Role'
+            example:
+              success: true
+              message: "Role updated successfully"
+              data:
+                _id: "507f1f77bcf86cd799439011"
+                name: "senior_developer"
+                displayName: "Lead Developer"
+                description: "Lead development projects, mentor developers, and make architectural decisions"
+                color: "#1d4ed8"
+                isSystem: false
+                isActive: true
+      '400':
+        $ref: '../components/index.yaml#/responses/ValidationError'
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '403':
+        description: Cannot update system role
+        content:
+          application/json:
+            schema:
+              $ref: '../components/index.yaml#/schemas/Error'
+            example:
+              error: "Update role failed"
+              message: "System roles cannot be updated"
+      '404':
+        $ref: '../components/index.yaml#/responses/NotFoundError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'
+
+  delete:
+    tags:
+      - Roles
+    summary: Delete role
+    description: Delete a custom role (system roles cannot be deleted)
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: roleId
+        in: path
+        required: true
+        description: Role ID
+        schema:
+          type: string
+          format: objectId
+          example: "507f1f77bcf86cd799439011"
+    responses:
+      '200':
+        description: Role deleted successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../components/index.yaml#/schemas/SuccessResponse'
+            example:
+              success: true
+              message: "Role deleted successfully"
+      '401':
+        $ref: '../components/index.yaml#/responses/UnauthorizedError'
+      '403':
+        description: Cannot delete system role
+        content:
+          application/json:
+            schema:
+              $ref: '../components/index.yaml#/schemas/Error'
+            example:
+              error: "Delete role failed"
+              message: "System roles cannot be deleted"
+      '404':
+        $ref: '../components/index.yaml#/responses/NotFoundError'
+      '500':
+        $ref: '../components/index.yaml#/responses/InternalServerError'

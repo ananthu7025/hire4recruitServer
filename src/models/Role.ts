@@ -1,17 +1,15 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
-export interface IEmployee extends Document {
+export interface IRole extends Document {
   _id: mongoose.Types.ObjectId;
   companyId: mongoose.Types.ObjectId;
 
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
-  phone?: string;
-  avatar?: string;
+  name: string;
+  displayName: string;
+  description?: string;
+  color?: string; // For UI display purposes
 
-  roleId: mongoose.Types.ObjectId;
+  // Default permissions for this role
   permissions: {
     jobs: { create: boolean; read: boolean; update: boolean; delete: boolean; };
     candidates: { create: boolean; read: boolean; update: boolean; delete: boolean; };
@@ -22,32 +20,10 @@ export interface IEmployee extends Document {
     settings: { read: boolean; update: boolean; };
   };
 
-  department?: string;
-  jobTitle?: string;
-  employeeId?: string;
-  expertise: string[];
-  bio?: string;
-
+  // System roles cannot be deleted or modified
+  isSystem: boolean;
   isActive: boolean;
   isDeleted: boolean;
-  isEmailVerified: boolean;
-  preferences: {
-    timezone?: string;
-    language?: string;
-    emailNotifications: boolean;
-    pushNotifications: boolean;
-  };
-
-  lastLogin?: Date;
-  passwordResetToken?: string;
-  passwordResetExpires?: Date;
-  failedLoginAttempts: number;
-  lockoutExpires?: Date;
-
-  invitedBy?: mongoose.Types.ObjectId;
-  invitedAt?: Date;
-  inviteToken?: string;
-  inviteAcceptedAt?: Date;
 
   createdBy: mongoose.Types.ObjectId;
   updatedBy: mongoose.Types.ObjectId;
@@ -55,49 +31,38 @@ export interface IEmployee extends Document {
   updatedAt: Date;
 }
 
-const EmployeeSchema: Schema = new Schema({
+const RoleSchema: Schema = new Schema({
   companyId: {
     type: Schema.Types.ObjectId,
     ref: 'Company',
     required: true
   },
 
-  email: {
+  name: {
     type: String,
     required: true,
+    trim: true,
     lowercase: true,
-    trim: true
+    maxlength: 50
   },
-  password: {
-    type: String,
-    required: true,
-    minlength: 8
-  },
-  firstName: {
+  displayName: {
     type: String,
     required: true,
     trim: true,
-    maxlength: 50
+    maxlength: 100
   },
-  lastName: {
+  description: {
     type: String,
-    required: true,
     trim: true,
-    maxlength: 50
+    maxlength: 500
   },
-  phone: {
+  color: {
     type: String,
-    trim: true
-  },
-  avatar: {
-    type: String
+    trim: true,
+    match: /^#[0-9A-F]{6}$/i, // Hex color code
+    default: '#6c757d'
   },
 
-  roleId: {
-    type: Schema.Types.ObjectId,
-    ref: 'Role',
-    required: true
-  },
   permissions: {
     jobs: {
       create: { type: Boolean, default: false },
@@ -138,28 +103,10 @@ const EmployeeSchema: Schema = new Schema({
     }
   },
 
-  department: {
-    type: String,
-    trim: true
+  isSystem: {
+    type: Boolean,
+    default: false
   },
-  jobTitle: {
-    type: String,
-    trim: true
-  },
-  employeeId: {
-    type: String,
-    trim: true
-  },
-  expertise: [{
-    type: String,
-    trim: true
-  }],
-  bio: {
-    type: String,
-    trim: true,
-    maxlength: 1000
-  },
-
   isActive: {
     type: Boolean,
     default: true
@@ -167,57 +114,6 @@ const EmployeeSchema: Schema = new Schema({
   isDeleted: {
     type: Boolean,
     default: false
-  },
-  isEmailVerified: {
-    type: Boolean,
-    default: false
-  },
-  preferences: {
-    timezone: {
-      type: String
-    },
-    language: {
-      type: String
-    },
-    emailNotifications: {
-      type: Boolean,
-      default: true
-    },
-    pushNotifications: {
-      type: Boolean,
-      default: true
-    }
-  },
-
-  lastLogin: {
-    type: Date
-  },
-  passwordResetToken: {
-    type: String
-  },
-  passwordResetExpires: {
-    type: Date
-  },
-  failedLoginAttempts: {
-    type: Number,
-    default: 0
-  },
-  lockoutExpires: {
-    type: Date
-  },
-
-  invitedBy: {
-    type: Schema.Types.ObjectId,
-    ref: 'Employee'
-  },
-  invitedAt: {
-    type: Date
-  },
-  inviteToken: {
-    type: String
-  },
-  inviteAcceptedAt: {
-    type: Date
   },
 
   createdBy: {
@@ -232,9 +128,9 @@ const EmployeeSchema: Schema = new Schema({
   timestamps: true
 });
 
-EmployeeSchema.index({ companyId: 1, email: 1 }, { unique: true });
-EmployeeSchema.index({ companyId: 1, isActive: 1, isDeleted: 1 });
-EmployeeSchema.index({ inviteToken: 1 });
-EmployeeSchema.index({ passwordResetToken: 1 });
+// Indexes
+RoleSchema.index({ companyId: 1, name: 1 }, { unique: true });
+RoleSchema.index({ companyId: 1, isActive: 1, isDeleted: 1 });
+RoleSchema.index({ isSystem: 1 });
 
-export default mongoose.model<IEmployee>('Employee', EmployeeSchema);
+export default mongoose.model<IRole>('Role', RoleSchema);

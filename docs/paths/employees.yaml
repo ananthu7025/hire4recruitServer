@@ -7,12 +7,12 @@ employees:
     parameters:
       - $ref: '../components/index.yaml#/parameters/PageParam'
       - $ref: '../components/index.yaml#/parameters/LimitParam'
-      - name: role
+      - name: roleId
         in: query
-        description: Filter by employee role
+        description: Filter by employee role ID
         schema:
           type: string
-          enum: [company_admin, hr_manager, recruiter, interviewer, hiring_manager]
+          format: objectId
       - name: isActive
         in: query
         description: Filter by active status
@@ -148,13 +148,13 @@ employees-by-role:
     summary: Get employees by role
     description: Retrieve all active employees with a specific role
     parameters:
-      - name: role
+      - name: roleId
         in: path
         required: true
-        description: Employee role
+        description: Employee role ID
         schema:
           type: string
-          enum: [company_admin, hr_manager, recruiter, interviewer, hiring_manager]
+          format: objectId
     security:
       - BearerAuth: []
     responses:
