@@ -16,6 +16,7 @@ export interface IRole extends Document {
     interviews: { create: boolean; read: boolean; update: boolean; delete: boolean; };
     assessments: { create: boolean; read: boolean; update: boolean; delete: boolean; };
     employees: { create: boolean; read: boolean; update: boolean; delete: boolean; };
+    workflows: { create: boolean; read: boolean; update: boolean; delete: boolean; };
     reports: { read: boolean; };
     settings: { read: boolean; update: boolean; };
   };
@@ -89,6 +90,12 @@ const RoleSchema: Schema = new Schema({
       delete: { type: Boolean, default: false }
     },
     employees: {
+      create: { type: Boolean, default: false },
+      read: { type: Boolean, default: false },
+      update: { type: Boolean, default: false },
+      delete: { type: Boolean, default: false }
+    },
+    workflows: {
       create: { type: Boolean, default: false },
       read: { type: Boolean, default: false },
       update: { type: Boolean, default: false },

@@ -61,10 +61,22 @@ export class AuthMiddleware {
         return;
       }
 
+      // Extract companyId properly
+      let companyId: string;
+      if (typeof user.companyId === 'object' && user.companyId !== null) {
+        // If populated, it's an object with _id property
+        companyId = (user.companyId as any)._id?.toString() || (user.companyId as any).toString();
+      } else if (user.companyId) {
+        // If not populated, it's already an ObjectId
+        companyId = (user.companyId as any).toString();
+      } else {
+        companyId = '';
+      }
+
       // Attach user information to request
       req.user = {
         userId: user._id.toString(),
-        companyId: typeof user.companyId === 'object' ? (user.companyId as any)._id.toString() : (user.companyId as any).toString(),
+        companyId,
         email: user.email,
         roleId: user.roleId.toString(),
         permissions: user.permissions,

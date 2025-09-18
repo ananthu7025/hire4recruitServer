@@ -37,6 +37,7 @@ export class RoleService {
             interviews: { create: true, read: true, update: true, delete: true },
             assessments: { create: true, read: true, update: true, delete: true },
             employees: { create: true, read: true, update: true, delete: true },
+            workflows: { create: true, read: true, update: true, delete: true },
             reports: { read: true },
             settings: { read: true, update: true }
           },
@@ -56,6 +57,7 @@ export class RoleService {
             interviews: { create: true, read: true, update: true, delete: false },
             assessments: { create: true, read: true, update: true, delete: false },
             employees: { create: true, read: true, update: true, delete: false },
+            workflows: { create: true, read: true, update: true, delete: false },
             reports: { read: true },
             settings: { read: true, update: false }
           },
@@ -75,6 +77,7 @@ export class RoleService {
             interviews: { create: true, read: true, update: true, delete: false },
             assessments: { create: false, read: true, update: false, delete: false },
             employees: { create: false, read: true, update: false, delete: false },
+            workflows: { create: false, read: true, update: false, delete: false },
             reports: { read: true },
             settings: { read: false, update: false }
           },
@@ -94,6 +97,7 @@ export class RoleService {
             interviews: { create: false, read: true, update: true, delete: false },
             assessments: { create: false, read: true, update: false, delete: false },
             employees: { create: false, read: true, update: false, delete: false },
+            workflows: { create: false, read: false, update: false, delete: false },
             reports: { read: false },
             settings: { read: false, update: false }
           },
@@ -113,6 +117,7 @@ export class RoleService {
             interviews: { create: true, read: true, update: true, delete: false },
             assessments: { create: false, read: true, update: false, delete: false },
             employees: { create: false, read: true, update: false, delete: false },
+            workflows: { create: true, read: true, update: true, delete: false },
             reports: { read: true },
             settings: { read: false, update: false }
           },
@@ -312,6 +317,7 @@ export class RoleService {
         interviews: { create: true, read: true, update: true, delete: true },
         assessments: { create: true, read: true, update: true, delete: true },
         employees: { create: true, read: true, update: true, delete: true },
+        workflows: { create: true, read: true, update: true, delete: true },
         reports: { read: true },
         settings: { read: true, update: true }
       },
@@ -321,6 +327,7 @@ export class RoleService {
         interviews: { create: true, read: true, update: true, delete: false },
         assessments: { create: true, read: true, update: true, delete: false },
         employees: { create: true, read: true, update: true, delete: false },
+        workflows: { create: true, read: true, update: true, delete: false },
         reports: { read: true },
         settings: { read: true, update: false }
       },
@@ -330,6 +337,7 @@ export class RoleService {
         interviews: { create: true, read: true, update: true, delete: false },
         assessments: { create: false, read: true, update: false, delete: false },
         employees: { create: false, read: true, update: false, delete: false },
+        workflows: { create: false, read: true, update: false, delete: false },
         reports: { read: true },
         settings: { read: false, update: false }
       },
@@ -339,6 +347,7 @@ export class RoleService {
         interviews: { create: false, read: true, update: true, delete: false },
         assessments: { create: false, read: true, update: false, delete: false },
         employees: { create: false, read: true, update: false, delete: false },
+        workflows: { create: false, read: false, update: false, delete: false },
         reports: { read: false },
         settings: { read: false, update: false }
       },
@@ -348,6 +357,7 @@ export class RoleService {
         interviews: { create: true, read: true, update: true, delete: false },
         assessments: { create: false, read: true, update: false, delete: false },
         employees: { create: false, read: true, update: false, delete: false },
+        workflows: { create: true, read: true, update: true, delete: false },
         reports: { read: true },
         settings: { read: false, update: false }
       }
@@ -359,6 +369,7 @@ export class RoleService {
       interviews: { create: false, read: false, update: false, delete: false },
       assessments: { create: false, read: false, update: false, delete: false },
       employees: { create: false, read: false, update: false, delete: false },
+      workflows: { create: false, read: false, update: false, delete: false },
       reports: { read: false },
       settings: { read: false, update: false }
     };
