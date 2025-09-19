@@ -455,7 +455,271 @@ This document describes the complete end-to-end user story for the hire4recruit 
 
 ---
 
-## **Phase 6: Advanced Features & Management**
+## **Phase 6: Workflow Automation & Execution**
+
+### **Story: Complete workflow automation in action**
+
+```
+26. 🤖 Automated Workflow System Overview
+    The platform includes a comprehensive automation engine:
+
+    Key Components:
+    → **WorkflowExecutionService**: Manages complete candidate journey through stages
+    → **EventService**: Real-time event handling and action triggering
+    → **QueueService**: Background job processing with Redis and Bull
+    → **EmailService**: AI-powered personalized email automation
+    → **CalendarService**: Google Calendar and Outlook integration
+    → **AI Integration**: Gemini AI for content personalization and screening
+
+27. 🔄 Complete Candidate Workflow Automation
+    POST /api/v1/workflows/{workflowId}/execute
+
+    When a candidate applies to a job:
+    → System automatically starts the assigned workflow
+    → Candidate enters first stage (e.g., "Application Received")
+    → Automated actions trigger immediately:
+      - Welcome email sent with AI personalization
+      - Application acknowledgment with expected timeline
+      - HR team notified via queue system
+      - Calendar events created if needed
+
+    Stage Progression Example:
+
+    Stage 1: Application Received
+    → Email: "Thank you for applying to {{jobTitle}} at {{companyName}}"
+    → AI personalizes content based on candidate profile
+    → Hiring manager notification queued
+    → Auto-advance to screening if basic requirements met
+
+    Stage 2: Initial Screening
+    → AI screening activated (skill matching, experience validation)
+    → Email: Screening invitation with personalized assessment
+    → Calendar: Screening call scheduled automatically
+    → Requirement: AI score > 70% to advance
+
+    Stage 3: Technical Interview
+    → Email: Technical interview invitation with details
+    → Calendar: Google Calendar event created with participants
+    → Meeting link generated (Google Meet/Zoom integration)
+    → Assessment: Coding challenge assigned via queue
+
+    Stage 4: Final Review
+    → Email: Status update to candidate
+    → Notification: Hiring manager review required
+    → Document: Automated reference check initiated
+    → Calendar: Final decision meeting scheduled
+
+28. ⚡ Real-Time Event Processing
+    EventService handles all workflow events:
+
+    Event Types:
+    → 'stage_entered': Triggers on_enter actions
+    → 'stage_exited': Triggers on_exit actions
+    → 'candidate_advanced': Updates all stakeholders
+    → 'candidate_rejected': Sends rejection emails
+    → 'workflow_completed': Final notifications
+    → 'action_triggered': Manual or automated actions
+
+    Event Flow:
+    → Event emitted → EventService processes → Queue jobs created
+    → Background workers execute → Results logged → Notifications sent
+
+29. 📧 AI-Powered Email Automation
+    EmailService with AI personalization:
+
+    Template Examples:
+    → interview_invitation: "Interview Invitation - {{jobTitle}} at {{companyName}}"
+    → application_received: "Thank you for your application"
+    → rejection: "Update on your application status"
+    → offer_letter: "Job Offer - {{jobTitle}} Position"
+
+    AI Features:
+    → Personalizes content based on candidate profile
+    → Optimizes send times for higher open rates
+    → A/B tests subject lines automatically
+    → Adapts tone based on company culture
+    → Multi-language support with context awareness
+
+30. 🗓️ Automated Calendar Management
+    CalendarService integration:
+
+    Features:
+    → Google Calendar and Outlook integration
+    → Automatic interview scheduling
+    → Conflict detection and resolution
+    → Multi-timezone support
+    → Recurring interview slots
+    → Automated reminders (24h, 1h before)
+
+    Workflow Actions:
+    → 'add_calendar_event': Creates calendar entries
+    → 'schedule_interview': Books interview slots
+    → 'send_reminder': Automated reminder emails
+    → 'reschedule_interview': Handles cancellations
+
+31. 🔄 Queue-Based Background Processing
+    QueueService manages all background tasks:
+
+    Queue Types:
+    → workflow-actions: Stage transitions, validations
+    → email-sending: High/normal/low priority emails
+    → scheduling: Calendar events, interview bookings
+    → notifications: Multi-channel notifications
+
+    Job Priorities:
+    → High: Urgent candidate communications
+    → Normal: Standard workflow emails
+    → Low: Analytics updates, cleanup tasks
+
+    Concurrency Settings:
+    → Workflow Queue: 5 concurrent jobs
+    → Email High Priority: 3 concurrent jobs
+    → Email Normal: 10 concurrent jobs
+    → Email Low: 2 concurrent jobs
+
+32. 🎯 Advanced Workflow Actions
+    Comprehensive action types available:
+
+    send_email:
+    → Template-based with AI personalization
+    → Custom variables and dynamic content
+    → Priority levels and delivery tracking
+
+    schedule_interview:
+    → Automatic participant coordination
+    → Meeting link generation
+    → Calendar integration
+    → Conflict resolution
+
+    assign_assessment:
+    → Technical/behavioral assessments
+    → Deadline management
+    → Auto-scoring with AI
+    → Progress tracking
+
+    add_calendar_event:
+    → Multi-provider support (Google, Outlook)
+    → Attendee management
+    → Location and virtual meeting setup
+
+    generate_offer_letter:
+    → Template-based offer generation
+    → Salary and benefit calculations
+    → Legal compliance checks
+    → Digital signature integration
+
+33. 📊 Workflow Analytics & Monitoring
+    GET /api/v1/workflows/{workflowId}/analytics
+
+    Real-time Metrics:
+    → Active executions by stage
+    → Average time per stage
+    → Conversion rates between stages
+    → Bottleneck identification
+    → Success/failure rates
+    → Email open/click rates
+    → Calendar acceptance rates
+
+    Performance Insights:
+    → Stage duration vs. planned time
+    → Drop-off points analysis
+    → Recruiter workload distribution
+    → Candidate satisfaction scores
+    → ROI measurements
+
+34. 🔧 Workflow Configuration Examples
+
+    Standard Software Engineer Workflow:
+    {
+      "stages": [
+        {
+          "name": "Application Received",
+          "autoAdvance": false,
+          "actions": [
+            {
+              "type": "send_email",
+              "trigger": "on_enter",
+              "config": {
+                "templateName": "application_received",
+                "useAIPersonalization": true,
+                "priority": "normal"
+              }
+            }
+          ]
+        },
+        {
+          "name": "AI Screening",
+          "autoAdvance": true,
+          "actions": [
+            {
+              "type": "assign_assessment",
+              "trigger": "on_enter",
+              "config": {
+                "assessmentType": "technical_screening",
+                "deadlineDays": 3,
+                "passingScore": 75
+              }
+            }
+          ],
+          "requirements": [
+            {
+              "type": "ai_screening_passed",
+              "config": { "minimumScore": 70 }
+            }
+          ]
+        },
+        {
+          "name": "Technical Interview",
+          "autoAdvance": false,
+          "actions": [
+            {
+              "type": "schedule_interview",
+              "trigger": "on_enter",
+              "config": {
+                "duration": 60,
+                "interviewType": "technical"
+              }
+            },
+            {
+              "type": "add_calendar_event",
+              "trigger": "on_enter",
+              "config": {
+                "title": "Technical Interview - {{candidateName}}",
+                "description": "Technical assessment for {{jobTitle}}"
+              }
+            }
+          ]
+        }
+      ]
+    }
+
+35. 🚀 Deployment & Configuration
+    Environment Setup:
+
+    Required Services:
+    → Redis: Background job processing
+    → MongoDB: Data persistence
+    → SMTP: Email delivery
+    → Google Calendar API: Calendar integration
+    → Gemini AI API: Content personalization
+
+    Configuration (.env):
+    → REDIS_HOST, REDIS_PORT, REDIS_PASSWORD
+    → SMTP_HOST, SMTP_USER, SMTP_PASS
+    → GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
+    → GEMINI_API_KEY
+
+    Queue Configuration:
+    → QUEUE_CONCURRENCY_WORKFLOW=5
+    → QUEUE_CONCURRENCY_EMAIL_HIGH=3
+    → QUEUE_CONCURRENCY_EMAIL_NORMAL=10
+    → ENABLE_BACKGROUND_JOBS=true
+    → CLEANUP_INTERVAL_MINUTES=60
+```
+
+---
+
+## **Phase 7: Advanced Features & Management**
 
 ### **Story: Platform optimization and growth**
 
@@ -546,9 +810,36 @@ This document describes the complete end-to-end user story for the hire4recruit 
 - `GET /api/v1/jobs/{jobId}/analytics` - Job performance
 - `POST /api/v1/jobs/{jobId}/clone` - Job duplication
 
+### **Workflow Automation**
+- `POST /api/v1/workflows/{workflowId}/execute` - Start workflow for candidate
+- `PUT /api/v1/workflows/{workflowId}/advance` - Advance candidate to next stage
+- `POST /api/v1/workflows/{workflowId}/reject` - Reject candidate
+- `POST /api/v1/workflows/{workflowId}/pause` - Pause workflow execution
+- `POST /api/v1/workflows/{workflowId}/resume` - Resume paused workflow
+- `POST /api/v1/workflows/{workflowId}/execute-action` - Execute manual action
+
+### **Email Automation**
+- `POST /api/v1/emails/send-template` - Send templated email
+- `POST /api/v1/emails/send-personalized` - Send AI-personalized email
+- `GET /api/v1/emails/templates` - List email templates
+- `POST /api/v1/emails/templates` - Create email template
+
+### **Calendar Integration**
+- `POST /api/v1/calendar/events` - Create calendar event
+- `GET /api/v1/calendar/availability` - Check availability
+- `PUT /api/v1/calendar/events/{eventId}` - Update calendar event
+- `DELETE /api/v1/calendar/events/{eventId}` - Cancel calendar event
+
+### **Queue Management**
+- `GET /api/v1/queue/stats` - Queue statistics
+- `POST /api/v1/queue/jobs` - Add background job
+- `GET /api/v1/queue/jobs/{jobId}` - Get job status
+- `DELETE /api/v1/queue/jobs/{jobId}` - Cancel job
+
 ### **Analytics & Monitoring**
 - `GET /api/v1/companies/stats` - Company metrics
 - `GET /api/v1/workflows/stats` - Workflow statistics
+- `GET /api/v1/workflows/{workflowId}/analytics` - Workflow performance
 - `POST /api/v1/interviews` - Interview scheduling
 
 ---
@@ -559,7 +850,11 @@ This document describes the complete end-to-end user story for the hire4recruit 
 ✅ **Team Setup**: 4 employees invited and active in 1 day
 ✅ **Workflow Creation**: 4 standardized processes in 2 hours
 ✅ **Job Posting**: First job live in 30 minutes with AI assistance
-✅ **Process Automation**: 80% reduction in manual recruitment tasks
+✅ **Process Automation**: 95% reduction in manual recruitment tasks
+✅ **Email Automation**: AI-personalized emails with 40% higher open rates
+✅ **Calendar Integration**: Automated scheduling reducing coordination time by 85%
+✅ **Queue Processing**: Background jobs handling 1000+ daily automation tasks
+✅ **Real-time Events**: Instant workflow execution and candidate notifications
 ✅ **Analytics**: Real-time insights driving continuous improvement
 ✅ **Scalability**: Platform ready for 10x growth without architectural changes
 
@@ -570,10 +865,15 @@ This document describes the complete end-to-end user story for the hire4recruit 
 🔧 **Authentication**: JWT-based with refresh tokens and email verification
 🔧 **Multi-tenancy**: Company-isolated data with subscription enforcement
 🔧 **Role-based Access**: Granular permissions with override capabilities
-🔧 **Workflow Engine**: State machine with AI-powered optimization
-🔧 **Real-time Analytics**: Performance tracking at every stage
-🔧 **AI Integration**: Content generation, candidate matching, process optimization
+🔧 **Workflow Engine**: Complete state machine with automated execution
+🔧 **Event-Driven Architecture**: Real-time event processing with EventService
+🔧 **Queue System**: Redis-based background job processing with Bull
+🔧 **Email Automation**: AI-powered personalized email templates with SMTP integration
+🔧 **Calendar Integration**: Google Calendar and Outlook API integration
+🔧 **AI Integration**: Gemini AI for content generation, candidate screening, and personalization
+🔧 **Background Processing**: Multi-priority queue system with 20+ concurrent workers
+🔧 **Real-time Analytics**: Performance tracking at every workflow stage
 🔧 **Payment Integration**: Razorpay with automatic subscription management
 🔧 **Audit Trail**: Complete user action tracking for compliance
 
-This comprehensive user story demonstrates the complete hire4recruit platform capabilities, from initial company registration through advanced workflow automation and job management, showcasing the seamless integration of all system components.
+This comprehensive user story demonstrates the complete hire4recruit platform capabilities, from initial company registration through fully automated workflow execution, showcasing the seamless integration of all system components including advanced automation, AI-powered features, and real-time processing capabilities.

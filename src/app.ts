@@ -7,6 +7,7 @@ import dotenv from "dotenv";
 import { connectDatabase } from "./config/database";
 import { logger } from "./config/logger";
 import { SwaggerConfig } from "./utils/swagger-config";
+import { ServicesConfig, ServicesHealthCheck } from "./config/services";
 
 
 dotenv.config();
@@ -68,13 +69,26 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 
 // Health check endpoint
-app.get("/health", (req: Request, res: Response) => {
-  res.status(200).json({
-    status: "OK",
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    version: process.env.npm_package_version || "1.0.0",
-  });
+app.get("/health", async (req: Request, res: Response) => {
+  try {
+    const healthCheck = await ServicesHealthCheck.checkHealth();
+
+    res.status(healthCheck.overall === 'healthy' ? 200 : 503).json({
+      status: healthCheck.overall.toUpperCase(),
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      version: process.env.npm_package_version || "1.0.0",
+      services: healthCheck.services
+    });
+  } catch (error) {
+    res.status(503).json({
+      status: "UNHEALTHY",
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      version: process.env.npm_package_version || "1.0.0",
+      error: error instanceof Error ? error.message : "Health check failed"
+    });
+  }
 });
 
 // API Routes
@@ -175,6 +189,18 @@ const startServer = async () => {
       logger.warn("Database connection failed", { error: dbError });
     }
 
+    // Initialize services
+    try {
+      await ServicesConfig.initializeServices();
+      console.log("✅ All services initialized successfully");
+    } catch (serviceError) {
+      console.warn(
+        "⚠️  Services initialization failed, some features may not work:",
+        serviceError instanceof Error ? serviceError.message : serviceError
+      );
+      logger.warn("Services initialization failed", { error: serviceError });
+    }
+
     app.listen(PORT, () => {
       logger.info(`🚀 hire4recruit server started successfully`, {
         port: PORT,
@@ -207,15 +233,31 @@ process.on("unhandledRejection", (reason, promise) => {
 });
 
 // Graceful shutdown
-process.on("SIGTERM", () => {
+process.on("SIGTERM", async () => {
   logger.info("SIGTERM received. Shutting down gracefully...");
   console.log("👋 SIGTERM received. Shutting down gracefully...");
+
+  try {
+    await ServicesConfig.shutdownServices();
+    console.log("✅ Services shut down successfully");
+  } catch (error) {
+    console.error("❌ Error during services shutdown:", error);
+  }
+
   process.exit(0);
 });
 
-process.on("SIGINT", () => {
+process.on("SIGINT", async () => {
   logger.info("SIGINT received. Shutting down gracefully...");
   console.log("👋 SIGINT received. Shutting down gracefully...");
+
+  try {
+    await ServicesConfig.shutdownServices();
+    console.log("✅ Services shut down successfully");
+  } catch (error) {
+    console.error("❌ Error during services shutdown:", error);
+  }
+
   process.exit(0);
 });
 
